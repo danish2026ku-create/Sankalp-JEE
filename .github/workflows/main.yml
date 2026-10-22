@@ -10,8 +10,2735 @@ jobs:
     runs-on: ubuntu-latest
 
     steps:
-      - name: Checkout code
+      - name: Checkout repository
         uses: actions/checkout@v4
+
+      - name: Generate Complete Android Project
+        run: |
+          mkdir -p app/src/main/res/values
+          mkdir -p app/src/main/res/xml
+          mkdir -p app/src/main/res/layout
+          mkdir -p app/src/main/java/com/sankalp/jee/data/local
+          mkdir -p app/src/main/java/com/sankalp/jee/data/preferences
+          mkdir -p app/src/main/java/com/sankalp/jee/service
+          mkdir -p app/src/main/java/com/sankalp/jee/widget
+          mkdir -p app/src/main/java/com/sankalp/jee/ui/theme
+          mkdir -p app/src/main/java/com/sankalp/jee/ui/components
+          mkdir -p app/src/main/java/com/sankalp/jee/ui/viewmodel
+          mkdir -p app/src/main/java/com/sankalp/jee/ui/screens
+
+          cat << 'EOF' > gradle.properties
+          org.gradle.jvmargs=-Xmx3072m -Dfile.encoding=UTF-8
+          android.useAndroidX=true
+          kotlin.code.style=official
+          android.nonTransitiveRClass=true
+          EOF
+
+          cat << 'EOF' > settings.gradle.kts
+          pluginManagement {
+              repositories {
+                  google()
+                  mavenCentral()
+                  gradlePluginPortal()
+              }
+          }
+          dependencyResolutionManagement {
+              repositoriesMode.set(RepositoriesMode.FAIL_ON_PROJECT_REPOS)
+              repositories {
+                  google()
+                  mavenCentral()
+              }
+          }
+          rootProject.name = "SankalpJEE"
+          include(":app")
+          EOF
+
+          cat << 'EOF' > build.gradle.kts
+          plugins {
+              id("com.android.application") version "8.3.2" apply false
+              id("org.jetbrains.kotlin.android") version "1.9.23" apply false
+              id("com.google.devtools.ksp") version "1.9.23-1.0.20" apply false
+          }
+          EOF
+
+          cat << 'EOF' > app/build.gradle.kts
+          plugins {
+              id("com.android.application")
+              id("org.jetbrains.kotlin.android")
+              id("com.google.devtools.ksp")
+          }
+
+          android {
+              namespace = "com.sankalp.jee"
+              compileSdk = 34
+
+              defaultConfig {
+                  applicationId = "com.sankalp.jee"
+                  minSdk = 24
+                  targetSdk = 34
+                  versionCode = 1
+                  versionName = "1.0.0-sankalp"
+                  vectorDrawables { useSupportLibrary = true }
+              }
+
+              buildTypes {
+                  debug {
+                      isMinifyEnabled = false
+                  }
+              }
+
+              compileOptions {
+                  isCoreLibraryDesugaringEnabled = true
+                  sourceCompatibility = JavaVersion.VERSION_17
+                  targetCompatibility = JavaVersion.VERSION_17
+              }
+
+              kotlinOptions {
+                  jvmTarget = "17"
+              }
+
+              buildFeatures {
+                  compose = true
+              }
+
+              composeOptions {
+                  kotlinCompilerExtensionVersion = "1.5.11"
+              }
+
+              packaging {
+                  resources {
+                      excludes += "/META-INF/{AL2.0,LGPL2.1}"
+                  }
+              }
+          }
+
+          dependencies {
+              coreLibraryDesugaring("com.android.tools:desugar_jdk_libs:2.0.4")
+
+              val composeBom = platform("androidx.compose:compose-bom:2024.04.01")
+              implementation(composeBom)
+
+              implementation("androidx.core:core-ktx:1.13.0")
+              implementation("androidx.lifecycle:lifecycle-runtime-ktx:2.7.0")
+              implementation("androidx.lifecycle:lifecycle-runtime-compose:2.7.0")
+              implementation("androidx.lifecycle:lifecycle-viewmodel-compose:2.7.0")
+              implementation("androidx.activity:activity-compose:1.9.0")
+
+              implementation("androidx.compose.ui:ui")
+              implementation("androidx.compose.ui:ui-graphics")
+              implementation("androidx.compose.ui:ui-tooling-preview")
+              implementation("androidx.compose.material3:material3")
+              implementation("androidx.compose.material:material-icons-extended")
+
+              implementation("androidx.room:room-runtime:2.6.1")
+              implementation("androidx.room:room-ktx:2.6.1")
+              ksp("androidx.room:room-compiler:2.6.1")
+
+              implementation("androidx.datastore:datastore-preferences:1.1.0")
+              implementation("androidx.work:work-runtime-ktx:2.9.0")
+          }
+          EOF
+
+          cat << 'EOF' > app/src/main/AndroidManifest.xml
+          <?xml version="1.0" encoding="utf-8"?>
+          <manifest xmlns:android="http://schemas.android.com/apk/res/android"
+              xmlns:tools="http://schemas.android.com/tools">
+
+              <uses-permission android:name="android.permission.POST_NOTIFICATIONS" />
+              <uses-permission android:name="android.permission.VIBRATE" />
+              <uses-permission
+                  android:name="android.permission.PACKAGE_USAGE_STATS"
+                  tools:ignore="ProtectedPermissions" />
+              <uses-permission
+                  android:name="android.permission.QUERY_ALL_PACKAGES"
+                  tools:ignore="QueryAllPackagesPermission" />
+
+              <application
+                  android:name=".SankalpApp"
+                  android:allowBackup="true"
+                  android:icon="@android:drawable/sym_def_app_icon"
+                  android:label="@string/app_name"
+                  android:roundIcon="@android:drawable/sym_def_app_icon"
+                  android:supportsRtl="true"
+                  android:theme="@style/Theme.SankalpJEE">
+
+                  <activity
+                      android:name=".MainActivity"
+                      android:exported="true"
+                      android:launchMode="singleTop"
+                      android:windowSoftInputMode="adjustResize">
+                      <intent-filter>
+                          <action android:name="android.intent.action.MAIN" />
+                          <category android:name="android.intent.category.LAUNCHER" />
+                      </intent-filter>
+                  </activity>
+
+                  <service
+                      android:name=".service.SankalpGuardianService"
+                      android:exported="true"
+                      android:label="@string/accessibility_service_label"
+                      android:permission="android.permission.BIND_ACCESSIBILITY_SERVICE">
+                      <intent-filter>
+                          <action android:name="android.accessibilityservice.AccessibilityService" />
+                      </intent-filter>
+                      <meta-data
+                          android:name="android.accessibilityservice"
+                          android:resource="@xml/accessibility_service_config" />
+                  </service>
+
+                  <receiver
+                      android:name=".widget.SankalpWidgetReceiver"
+                      android:exported="true"
+                      android:label="@string/widget_name">
+                      <intent-filter>
+                          <action android:name="android.appwidget.action.APPWIDGET_UPDATE" />
+                      </intent-filter>
+                      <meta-data
+                          android:name="android.appwidget.provider"
+                          android:resource="@xml/widget_info" />
+                  </receiver>
+              </application>
+          </manifest>
+          EOF
+
+          cat << 'EOF' > app/src/main/res/values/strings.xml
+          <?xml version="1.0" encoding="utf-8"?>
+          <resources>
+              <string name="app_name">Sankalp JEE</string>
+              <string name="accessibility_service_label">Sankalp Focus and Reels Shield</string>
+              <string name="accessibility_service_description">Protects JEE study sessions by closing blocked distracting apps and breaking Reels/Shorts scroll loops. 100% offline.</string>
+              <string name="widget_name">Sankalp JEE Command Widget</string>
+          </resources>
+          EOF
+
+          cat << 'EOF' > app/src/main/res/values/themes.xml
+          <?xml version="1.0" encoding="utf-8"?>
+          <resources>
+              <style name="Theme.SankalpJEE" parent="android:Theme.Material.NoActionBar">
+                  <item name="android:statusBarColor">#0B0F17</item>
+                  <item name="android:navigationBarColor">#0B0F17</item>
+              </style>
+          </resources>
+          EOF
+
+          cat << 'EOF' > app/src/main/res/xml/accessibility_service_config.xml
+          <?xml version="1.0" encoding="utf-8"?>
+          <accessibility-service xmlns:android="http://schemas.android.com/apk/res/android"
+              android:accessibilityEventTypes="typeWindowStateChanged|typeWindowContentChanged|typeViewScrolled"
+              android:accessibilityFeedbackType="feedbackGeneric"
+              android:accessibilityFlags="flagDefault|flagReportViewIds|flagRetrieveInteractiveWindows"
+              android:canRetrieveWindowContent="true"
+              android:description="@string/accessibility_service_description"
+              android:notificationTimeout="150" />
+          EOF
+
+          cat << 'EOF' > app/src/main/res/xml/widget_info.xml
+          <?xml version="1.0" encoding="utf-8"?>
+          <appwidget-provider xmlns:android="http://schemas.android.com/apk/res/android"
+              android:initialLayout="@layout/widget_sankalp_layout"
+              android:minWidth="250dp"
+              android:minHeight="110dp"
+              android:previewImage="@android:drawable/sym_def_app_icon"
+              android:resizeMode="horizontal|vertical"
+              android:updatePeriodMillis="1800000"
+              android:widgetCategory="home_screen" />
+          EOF
+
+          cat << 'EOF' > app/src/main/res/layout/widget_sankalp_layout.xml
+          <?xml version="1.0" encoding="utf-8"?>
+          <LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
+              android:id="@+id/widget_root"
+              android:layout_width="match_parent"
+              android:layout_height="match_parent"
+              android:background="#131924"
+              android:orientation="vertical"
+              android:padding="16dp">
+
+              <LinearLayout
+                  android:layout_width="match_parent"
+                  android:layout_height="wrap_content"
+                  android:gravity="center_vertical"
+                  android:orientation="horizontal">
+
+                  <TextView
+                      android:id="@+id/widget_title"
+                      android:layout_width="0dp"
+                      android:layout_height="wrap_content"
+                      android:layout_weight="1"
+                      android:text="SANKALP // JEE COMMAND"
+                      android:textColor="#F59E0B"
+                      android:textSize="11sp"
+                      android:textStyle="bold" />
+
+                  <TextView
+                      android:id="@+id/widget_days_left"
+                      android:layout_width="wrap_content"
+                      android:layout_height="wrap_content"
+                      android:text="92 DAYS LEFT"
+                      android:textColor="#F3F4F6"
+                      android:textSize="12sp"
+                      android:textStyle="bold" />
+              </LinearLayout>
+
+              <TextView
+                  android:id="@+id/widget_focus_stats"
+                  android:layout_width="match_parent"
+                  android:layout_height="wrap_content"
+                  android:layout_marginTop="8dp"
+                  android:text="Today: 0 min focused"
+                  android:textColor="#2DD4BF"
+                  android:textSize="14sp"
+                  android:textStyle="bold" />
+
+              <TextView
+                  android:id="@+id/widget_next_task"
+                  android:layout_width="match_parent"
+                  android:layout_height="wrap_content"
+                  android:layout_marginTop="6dp"
+                  android:maxLines="2"
+                  android:text="Tap to launch Deep Focus."
+                  android:textColor="#9CA3AF"
+                  android:textSize="12sp" />
+          </LinearLayout>
+          EOF
+
+          cat << 'EOF' > app/src/main/java/com/sankalp/jee/SankalpApp.kt
+          package com.sankalp.jee
+
+          import android.app.Application
+          import android.app.NotificationChannel
+          import android.app.NotificationManager
+          import android.os.Build
+          import androidx.work.ExistingPeriodicWorkPolicy
+          import androidx.work.PeriodicWorkRequestBuilder
+          import androidx.work.WorkManager
+          import com.sankalp.jee.service.DailyPulseWorker
+          import java.util.concurrent.TimeUnit
+
+          class SankalpApp : Application() {
+              override fun onCreate() {
+                  super.onCreate()
+                  if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O) {
+                      val manager = getSystemService(NotificationManager::class.java)
+                      manager.createNotificationChannel(
+                          NotificationChannel(CHANNEL_FOCUS_GUARD, "Focus Shield", NotificationManager.IMPORTANCE_HIGH)
+                      )
+                      manager.createNotificationChannel(
+                          NotificationChannel(CHANNEL_DAILY_PULSE, "Daily Revision Pulse", NotificationManager.IMPORTANCE_DEFAULT)
+                      )
+                  }
+                  val req = PeriodicWorkRequestBuilder<DailyPulseWorker>(6, TimeUnit.HOURS).build()
+                  WorkManager.getInstance(this).enqueueUniquePeriodicWork(
+                      "sankalp_daily_pulse",
+                      ExistingPeriodicWorkPolicy.KEEP,
+                      req
+                  )
+              }
+
+              companion object {
+                  const val CHANNEL_FOCUS_GUARD = "sankalp_focus_guard"
+                  const val CHANNEL_DAILY_PULSE = "sankalp_daily_pulse"
+              }
+          }
+          EOF
+
+          cat << 'EOF' > app/src/main/java/com/sankalp/jee/data/local/Entities.kt
+          package com.sankalp.jee.data.local
+
+          import androidx.room.Entity
+          import androidx.room.PrimaryKey
+
+          enum class Subject(val displayName: String, val shortCode: String) {
+              PHYSICS("Physics", "PHY"),
+              CHEMISTRY("Chemistry", "CHEM"),
+              MATHEMATICS("Mathematics", "MATH")
+          }
+
+          enum class TopicStatus(val label: String) {
+              NOT_STARTED("Not Started"),
+              LEARNING("Learning"),
+              REVISED("Revised"),
+              MASTERED("Mastered")
+          }
+
+          enum class WeightageTier(val label: String, val multiplier: Float) {
+              HIGH("High Yield", 1.6f),
+              MEDIUM("Medium", 1.2f),
+              LOW("Low", 0.8f)
+          }
+
+          enum class ErrorCategory(val label: String) {
+              SILLY_CALCULATION("Silly / Calc"),
+              CONCEPT_GAP("Concept Gap"),
+              TIME_PRESSURE("Time Panic"),
+              BLIND_GUESS("Impulse Guess")
+          }
+
+          enum class FocusMode(val label: String) {
+              POMODORO("Pomodoro"),
+              COUNTDOWN("3-Hr Exam Block"),
+              STOPWATCH("Flow Stopwatch")
+          }
+
+          @Entity(tableName = "syllabus_chapters")
+          data class SyllabusChapterEntity(
+              @PrimaryKey(autoGenerate = true) val id: Long = 0,
+              val subject: Subject,
+              val classLevel: Int,
+              val chapterName: String,
+              val topicsCsv: String,
+              val completedTopicsCsv: String = "",
+              val status: TopicStatus = TopicStatus.NOT_STARTED,
+              val confidence: Int = 1,
+              val weightage: WeightageTier = WeightageTier.MEDIUM,
+              val totalPyqs: Int = 45,
+              val solvedPyqs: Int = 0,
+              val isBacklog: Boolean = false,
+              val lastStudiedEpochDay: Long = 0L
+          )
+
+          @Entity(tableName = "study_tasks")
+          data class StudyTaskEntity(
+              @PrimaryKey(autoGenerate = true) val id: Long = 0,
+              val title: String,
+              val subject: Subject,
+              val estimatedMinutes: Int,
+              val targetEpochDay: Long,
+              val isCompleted: Boolean = false,
+              val isBacklog: Boolean = false,
+              val sortOrder: Int = 0
+          )
+
+          @Entity(tableName = "focus_sessions")
+          data class FocusSessionEntity(
+              @PrimaryKey(autoGenerate = true) val id: Long = 0,
+              val mode: FocusMode,
+              val subject: Subject,
+              val durationMinutes: Int,
+              val epochDay: Long,
+              val timestampMillis: Long,
+              val completedCleanly: Boolean
+          )
+
+          @Entity(tableName = "mock_tests")
+          data class MockTestEntity(
+              @PrimaryKey(autoGenerate = true) val id: Long = 0,
+              val testName: String,
+              val examPattern: String,
+              val epochDay: Long,
+              val maxMarks: Int,
+              val totalScore: Int,
+              val physicsScore: Int,
+              val chemistryScore: Int,
+              val mathsScore: Int,
+              val accuracyPercent: Int,
+              val durationMinutesTaken: Int,
+              val avgSecondsPerQuestion: Int
+          )
+
+          @Entity(tableName = "error_logs")
+          data class ErrorLogEntity(
+              @PrimaryKey(autoGenerate = true) val id: Long = 0,
+              val subject: Subject,
+              val chapterName: String,
+              val errorCategory: ErrorCategory,
+              val questionSummary: String,
+              val oneLineFix: String,
+              val epochDay: Long
+          )
+
+          @Entity(tableName = "flashcards")
+          data class FlashcardEntity(
+              @PrimaryKey(autoGenerate = true) val id: Long = 0,
+              val subject: Subject,
+              val chapterName: String,
+              val frontPrompt: String,
+              val backAnswer: String,
+              val isFormula: Boolean = true,
+              val repetitions: Int = 0,
+              val intervalDays: Int = 0,
+              val easinessFactor: Float = 2.5f,
+              val nextReviewEpochDay: Long = 0L
+          )
+
+          @Entity(tableName = "quick_notes")
+          data class QuickNoteEntity(
+              @PrimaryKey(autoGenerate = true) val id: Long = 0,
+              val subject: Subject,
+              val title: String,
+              val content: String,
+              val tagsCsv: String,
+              val isResolved: Boolean = false,
+              val createdAtEpochDay: Long
+          )
+          EOF
+
+          cat << 'EOF' > app/src/main/java/com/sankalp/jee/data/local/SankalpDao.kt
+          package com.sankalp.jee.data.local
+
+          import androidx.room.Dao
+          import androidx.room.Delete
+          import androidx.room.Insert
+          import androidx.room.OnConflictStrategy
+          import androidx.room.Query
+          import androidx.room.Update
+          import kotlinx.coroutines.flow.Flow
+
+          @Dao
+          interface SankalpDao {
+              @Query("SELECT * FROM syllabus_chapters ORDER BY subject ASC, classLevel ASC, id ASC")
+              fun observeAllChapters(): Flow<List<SyllabusChapterEntity>>
+
+              @Query("SELECT COUNT(*) FROM syllabus_chapters")
+              suspend fun getChapterCount(): Int
+
+              @Insert(onConflict = OnConflictStrategy.REPLACE)
+              suspend fun insertChapters(chapters: List<SyllabusChapterEntity>)
+
+              @Update
+              suspend fun updateChapter(chapter: SyllabusChapterEntity)
+
+              @Query("SELECT * FROM study_tasks ORDER BY isCompleted ASC, sortOrder ASC, id DESC")
+              fun observeAllTasks(): Flow<List<StudyTaskEntity>>
+
+              @Insert(onConflict = OnConflictStrategy.REPLACE)
+              suspend fun insertTask(task: StudyTaskEntity)
+
+              @Update
+              suspend fun updateTask(task: StudyTaskEntity)
+
+              @Delete
+              suspend fun deleteTask(task: StudyTaskEntity)
+
+              @Query("SELECT * FROM focus_sessions ORDER BY timestampMillis DESC")
+              fun observeFocusSessions(): Flow<List<FocusSessionEntity>>
+
+              @Insert(onConflict = OnConflictStrategy.REPLACE)
+              suspend fun insertFocusSession(session: FocusSessionEntity)
+
+              @Query("SELECT * FROM mock_tests ORDER BY epochDay ASC, id ASC")
+              fun observeMockTests(): Flow<List<MockTestEntity>>
+
+              @Insert(onConflict = OnConflictStrategy.REPLACE)
+              suspend fun insertMockTest(mockTest: MockTestEntity)
+
+              @Query("SELECT * FROM error_logs ORDER BY id DESC")
+              fun observeErrorLogs(): Flow<List<ErrorLogEntity>>
+
+              @Insert(onConflict = OnConflictStrategy.REPLACE)
+              suspend fun insertErrorLog(errorLog: ErrorLogEntity)
+
+              @Query("SELECT * FROM flashcards ORDER BY nextReviewEpochDay ASC, id ASC")
+              fun observeFlashcards(): Flow<List<FlashcardEntity>>
+
+              @Query("SELECT COUNT(*) FROM flashcards WHERE nextReviewEpochDay <= :todayEpochDay")
+              suspend fun getDueFlashcardCount(todayEpochDay: Long): Int
+
+              @Insert(onConflict = OnConflictStrategy.REPLACE)
+              suspend fun insertFlashcards(cards: List<FlashcardEntity>)
+
+              @Insert(onConflict = OnConflictStrategy.REPLACE)
+              suspend fun insertFlashcard(card: FlashcardEntity)
+
+              @Update
+              suspend fun updateFlashcard(card: FlashcardEntity)
+
+              @Query("SELECT * FROM quick_notes ORDER BY isResolved ASC, id DESC")
+              fun observeQuickNotes(): Flow<List<QuickNoteEntity>>
+
+              @Insert(onConflict = OnConflictStrategy.REPLACE)
+              suspend fun insertQuickNote(note: QuickNoteEntity)
+
+              @Update
+              suspend fun updateQuickNote(note: QuickNoteEntity)
+
+              @Delete
+              suspend fun deleteQuickNote(note: QuickNoteEntity)
+          }
+          EOF
+
+          cat << 'EOF' > app/src/main/java/com/sankalp/jee/data/local/SankalpDatabase.kt
+          package com.sankalp.jee.data.local
+
+          import android.content.Context
+          import androidx.room.Database
+          import androidx.room.Room
+          import androidx.room.RoomDatabase
+          import androidx.room.TypeConverter
+          import androidx.room.TypeConverters
+
+          class SankalpTypeConverters {
+              @TypeConverter fun fromSubject(value: Subject): String = value.name
+              @TypeConverter fun toSubject(value: String): Subject = Subject.valueOf(value)
+              @TypeConverter fun fromTopicStatus(value: TopicStatus): String = value.name
+              @TypeConverter fun toTopicStatus(value: String): TopicStatus = TopicStatus.valueOf(value)
+              @TypeConverter fun fromWeightage(value: WeightageTier): String = value.name
+              @TypeConverter fun toWeightage(value: String): WeightageTier = WeightageTier.valueOf(value)
+              @TypeConverter fun fromErrorCategory(value: ErrorCategory): String = value.name
+              @TypeConverter fun toErrorCategory(value: String): ErrorCategory = ErrorCategory.valueOf(value)
+              @TypeConverter fun fromFocusMode(value: FocusMode): String = value.name
+              @TypeConverter fun toFocusMode(value: String): FocusMode = FocusMode.valueOf(value)
+          }
+
+          @Database(
+              entities = [
+                  SyllabusChapterEntity::class,
+                  StudyTaskEntity::class,
+                  FocusSessionEntity::class,
+                  MockTestEntity::class,
+                  ErrorLogEntity::class,
+                  FlashcardEntity::class,
+                  QuickNoteEntity::class
+              ],
+              version = 1,
+              exportSchema = false
+          )
+          @TypeConverters(SankalpTypeConverters::class)
+          abstract class SankalpDatabase : RoomDatabase() {
+              abstract fun sankalpDao(): SankalpDao
+
+              companion object {
+                  @Volatile
+                  private var INSTANCE: SankalpDatabase? = null
+
+                  fun getInstance(context: Context): SankalpDatabase {
+                      return INSTANCE ?: synchronized(this) {
+                          val instance = Room.databaseBuilder(
+                              context.applicationContext,
+                              SankalpDatabase::class.java,
+                              "sankalp_jee_offline.db"
+                          ).fallbackToDestructiveMigration().build()
+                          INSTANCE = instance
+                          instance
+                      }
+                  }
+              }
+          }
+          EOF
+
+          cat << 'EOF' > app/src/main/java/com/sankalp/jee/data/local/SeedData.kt
+          package com.sankalp.jee.data.local
+
+          import java.time.LocalDate
+
+          object SeedData {
+              fun initialSyllabus(): List<SyllabusChapterEntity> {
+                  val today = LocalDate.now().toEpochDay()
+                  return listOf(
+                      SyllabusChapterEntity(subject = Subject.PHYSICS, classLevel = 11, chapterName = "Kinematics and Projectile Motion", topicsCsv = "1D Calculus Motion,Relative Velocity,Projectile on Incline,River-Boat", completedTopicsCsv = "1D Calculus Motion,Relative Velocity", status = TopicStatus.REVISED, confidence = 4, weightage = WeightageTier.MEDIUM, totalPyqs = 55, solvedPyqs = 42, lastStudiedEpochDay = today - 2),
+                      SyllabusChapterEntity(subject = Subject.PHYSICS, classLevel = 11, chapterName = "Rotational Mechanics", topicsCsv = "Moment of Inertia,Torque and Angular Momentum,Pure Rolling,Collisions", status = TopicStatus.LEARNING, confidence = 2, weightage = WeightageTier.HIGH, totalPyqs = 85, solvedPyqs = 18, isBacklog = true),
+                      SyllabusChapterEntity(subject = Subject.PHYSICS, classLevel = 11, chapterName = "Thermodynamics and Kinetic Theory", topicsCsv = "First Law and Polytropic,Carnot Engine,Degrees of Freedom,Maxwell Curve", completedTopicsCsv = "First Law and Polytropic,Carnot Engine", status = TopicStatus.REVISED, confidence = 4, weightage = WeightageTier.HIGH, totalPyqs = 90, solvedPyqs = 68),
+                      SyllabusChapterEntity(subject = Subject.PHYSICS, classLevel = 12, chapterName = "Electrostatics and Capacitors", topicsCsv = "Gauss Law,Electric Dipole,Concentric Spheres,RC Transient Circuits,Dielectrics", completedTopicsCsv = "Gauss Law,Electric Dipole", status = TopicStatus.LEARNING, confidence = 2, weightage = WeightageTier.HIGH, totalPyqs = 95, solvedPyqs = 30, isBacklog = true),
+                      SyllabusChapterEntity(subject = Subject.PHYSICS, classLevel = 12, chapterName = "Current Electricity", topicsCsv = "Kirchhoff Analysis,Symmetry Networks,Meter Bridge and Potentiometer", completedTopicsCsv = "Kirchhoff Analysis,Symmetry Networks,Meter Bridge and Potentiometer", status = TopicStatus.MASTERED, confidence = 5, weightage = WeightageTier.HIGH, totalPyqs = 80, solvedPyqs = 76),
+                      SyllabusChapterEntity(subject = Subject.PHYSICS, classLevel = 12, chapterName = "Modern Physics and Semiconductors", topicsCsv = "Photoelectric Effect,Bohr Spectrum,De-Broglie,Nuclear Binding,Logic Gates", completedTopicsCsv = "Photoelectric Effect,Bohr Spectrum,De-Broglie", status = TopicStatus.REVISED, confidence = 4, weightage = WeightageTier.HIGH, totalPyqs = 100, solvedPyqs = 82),
+                      SyllabusChapterEntity(subject = Subject.CHEMISTRY, classLevel = 11, chapterName = "Chemical Bonding and Molecular Structure", topicsCsv = "VSEPR and Hybridisation,MOT Bond Order,Dipole Moment,Back Bonding", completedTopicsCsv = "VSEPR and Hybridisation,MOT Bond Order,Dipole Moment,Back Bonding", status = TopicStatus.MASTERED, confidence = 5, weightage = WeightageTier.HIGH, totalPyqs = 90, solvedPyqs = 85),
+                      SyllabusChapterEntity(subject = Subject.CHEMISTRY, classLevel = 11, chapterName = "Chemical and Ionic Equilibrium", topicsCsv = "Le Chatelier,pH of Acids,Buffer Capacity,Solubility Product Ksp", status = TopicStatus.LEARNING, confidence = 2, weightage = WeightageTier.HIGH, totalPyqs = 75, solvedPyqs = 19, isBacklog = true),
+                      SyllabusChapterEntity(subject = Subject.CHEMISTRY, classLevel = 11, chapterName = "General Organic Chemistry and Isomerism", topicsCsv = "Resonance and Hyperconjugation,Aromaticity,Acid-Base Order,Stereoisomers", completedTopicsCsv = "Resonance and Hyperconjugation,Aromaticity", status = TopicStatus.REVISED, confidence = 4, weightage = WeightageTier.HIGH, totalPyqs = 95, solvedPyqs = 64),
+                      SyllabusChapterEntity(subject = Subject.CHEMISTRY, classLevel = 12, chapterName = "Electrochemistry and Chemical Kinetics", topicsCsv = "Nernst Equation,Kohlrausch Law,First Order Kinetics,Arrhenius Equation", completedTopicsCsv = "Nernst Equation,First Order Kinetics", status = TopicStatus.REVISED, confidence = 4, weightage = WeightageTier.HIGH, totalPyqs = 85, solvedPyqs = 60),
+                      SyllabusChapterEntity(subject = Subject.CHEMISTRY, classLevel = 12, chapterName = "Coordination Compounds and d-Block", topicsCsv = "Isomerism in Complexes,Crystal Field Splitting,Carbonyl Bonding,KMnO4", status = TopicStatus.LEARNING, confidence = 3, weightage = WeightageTier.HIGH, totalPyqs = 98, solvedPyqs = 45),
+                      SyllabusChapterEntity(subject = Subject.MATHEMATICS, classLevel = 11, chapterName = "Coordinate Geometry (Circles and Conics)", topicsCsv = "Family of Lines,Orthogonal Circles,Focal Chords and Normals of Conics", status = TopicStatus.LEARNING, confidence = 2, weightage = WeightageTier.HIGH, totalPyqs = 110, solvedPyqs = 30, isBacklog = true),
+                      SyllabusChapterEntity(subject = Subject.MATHEMATICS, classLevel = 12, chapterName = "Matrices, Determinants and Complex Numbers", topicsCsv = "Cayley-Hamilton,Cramer System,Roots of Unity and Rotation", completedTopicsCsv = "Cayley-Hamilton,Cramer System", status = TopicStatus.REVISED, confidence = 4, weightage = WeightageTier.HIGH, totalPyqs = 95, solvedPyqs = 72),
+                      SyllabusChapterEntity(subject = Subject.MATHEMATICS, classLevel = 12, chapterName = "Definite Integration and Differential Equations", topicsCsv = "King Rule and Leibniz,Limit of Sum,Linear Differential Equations", status = TopicStatus.LEARNING, confidence = 2, weightage = WeightageTier.HIGH, totalPyqs = 105, solvedPyqs = 32),
+                      SyllabusChapterEntity(subject = Subject.MATHEMATICS, classLevel = 12, chapterName = "Vectors and 3D Geometry", topicsCsv = "Scalar and Vector Triple Product,Shortest Distance Skew Lines,Plane Image", completedTopicsCsv = "Scalar and Vector Triple Product,Shortest Distance Skew Lines,Plane Image", status = TopicStatus.MASTERED, confidence = 5, weightage = WeightageTier.HIGH, totalPyqs = 115, solvedPyqs = 98)
+                  )
+              }
+
+              fun initialTasks(): List<StudyTaskEntity> {
+                  val today = LocalDate.now().toEpochDay()
+                  return listOf(
+                      StudyTaskEntity(title = "Solve 25 JEE Main PYQs on Electrostatics (Gauss Law + RC)", subject = Subject.PHYSICS, estimatedMinutes = 90, targetEpochDay = today, sortOrder = 1),
+                      StudyTaskEntity(title = "Revise Coordination CFSE and 20 PYQs", subject = Subject.CHEMISTRY, estimatedMinutes = 75, targetEpochDay = today, sortOrder = 2),
+                      StudyTaskEntity(title = "Definite Integration King Rule and Leibniz Drill (30 Qs)", subject = Subject.MATHEMATICS, estimatedMinutes = 90, targetEpochDay = today, sortOrder = 3),
+                      StudyTaskEntity(title = "Clear Backlog: Rotational Rolling on Incline", subject = Subject.PHYSICS, estimatedMinutes = 120, targetEpochDay = today - 2, isBacklog = true, sortOrder = 4)
+                  )
+              }
+
+              fun initialFlashcards(): List<FlashcardEntity> {
+                  val today = LocalDate.now().toEpochDay()
+                  return listOf(
+                      FlashcardEntity(subject = Subject.PHYSICS, chapterName = "Rotational Mechanics", frontPrompt = "Condition for Pure Rolling and acceleration down a rough incline of angle theta?", backAnswer = "v_cm = wR and a_cm = alpha*R.\nDown rough incline: a = g*sin(theta) / (1 + I_cm / mR^2).", isFormula = true, nextReviewEpochDay = today),
+                      FlashcardEntity(subject = Subject.PHYSICS, chapterName = "Electrostatics and Capacitors", frontPrompt = "Electric Potential inside a uniformly charged non-conducting sphere (r < R)?", backAnswer = "V(r) = (kQ / 2R^3) * (3R^2 - r^2)\nAt center: V_center = 1.5 * V_surface.", isFormula = true, nextReviewEpochDay = today),
+                      FlashcardEntity(subject = Subject.CHEMISTRY, chapterName = "Electrochemistry and Chemical Kinetics", frontPrompt = "Nernst Equation at 298 K and First-Order Half-Life?", backAnswer = "E_cell = E0_cell - (0.0591 / n) * log10(Q)\nt_1/2 = 0.693 / k", isFormula = true, nextReviewEpochDay = today),
+                      FlashcardEntity(subject = Subject.MATHEMATICS, chapterName = "Vectors and 3D Geometry", frontPrompt = "Shortest Distance between two skew lines r = a1 + t*b1 and r = a2 + s*b2?", backAnswer = "d = |((a2 - a1) . (b1 x b2))| / |b1 x b2|", isFormula = true, nextReviewEpochDay = today)
+                  )
+              }
+
+              fun initialMockTests(): List<MockTestEntity> {
+                  val today = LocalDate.now().toEpochDay()
+                  return listOf(
+                      MockTestEntity(testName = "Full Syllabus Mock #1", examPattern = "JEE Main (300)", epochDay = today - 21, maxMarks = 300, totalScore = 158, physicsScore = 62, chemistryScore = 54, mathsScore = 42, accuracyPercent = 76, durationMinutesTaken = 178, avgSecondsPerQuestion = 152),
+                      MockTestEntity(testName = "Full Syllabus Mock #2", examPattern = "JEE Main (300)", epochDay = today - 14, maxMarks = 300, totalScore = 176, physicsScore = 68, chemistryScore = 60, mathsScore = 48, accuracyPercent = 81, durationMinutesTaken = 175, avgSecondsPerQuestion = 144),
+                      MockTestEntity(testName = "Full Syllabus Mock #3", examPattern = "JEE Main (300)", epochDay = today - 5, maxMarks = 300, totalScore = 194, physicsScore = 76, chemistryScore = 66, mathsScore = 52, accuracyPercent = 84, durationMinutesTaken = 172, avgSecondsPerQuestion = 138)
+                  )
+              }
+
+              fun initialErrorLogs(): List<ErrorLogEntity> {
+                  val today = LocalDate.now().toEpochDay()
+                  return listOf(
+                      ErrorLogEntity(subject = Subject.PHYSICS, chapterName = "Electrostatics and Capacitors", errorCategory = ErrorCategory.CONCEPT_GAP, questionSummary = "Dielectric slab inserted with battery disconnected vs connected", oneLineFix = "Battery disconnected => Q constant; Battery connected => V constant.", epochDay = today - 5),
+                      ErrorLogEntity(subject = Subject.MATHEMATICS, chapterName = "Coordinate Geometry (Circles and Conics)", errorCategory = ErrorCategory.SILLY_CALCULATION, questionSummary = "Eccentricity of ellipse 9x^2 + 16y^2 = 144", oneLineFix = "Always divide by RHS first to get standard form x^2/16 + y^2/9 = 1.", epochDay = today - 5)
+                  )
+              }
+
+              fun initialQuickNotes(): List<QuickNoteEntity> {
+                  val today = LocalDate.now().toEpochDay()
+                  return listOf(
+                      QuickNoteEntity(subject = Subject.CHEMISTRY, title = "Inorganic Exception: Co3+ with H2O and Oxalate", content = "H2O and oxalate act as strong field ligands with Co3+ forming diamagnetic d2sp3 complexes.", tagsCsv = "Inorganic,Exception,Coordination", isResolved = true, createdAtEpochDay = today - 3)
+                  )
+              }
+          }
+          EOF
+
+          cat << 'EOF' > app/src/main/java/com/sankalp/jee/data/preferences/UserPreferencesRepository.kt
+          package com.sankalp.jee.data.preferences
+
+          import android.content.Context
+          import androidx.datastore.core.DataStore
+          import androidx.datastore.preferences.core.Preferences
+          import androidx.datastore.preferences.core.booleanPreferencesKey
+          import androidx.datastore.preferences.core.edit
+          import androidx.datastore.preferences.core.intPreferencesKey
+          import androidx.datastore.preferences.core.longPreferencesKey
+          import androidx.datastore.preferences.core.stringPreferencesKey
+          import androidx.datastore.preferences.core.stringSetPreferencesKey
+          import androidx.datastore.preferences.preferencesDataStore
+          import kotlinx.coroutines.flow.Flow
+          import kotlinx.coroutines.flow.map
+          import java.time.LocalDate
+
+          val Context.sankalpDataStore: DataStore<Preferences> by preferencesDataStore(name = "sankalp_user_prefs")
+
+          data class UserPreferencesState(
+              val darkTheme: Boolean = true,
+              val examTargetName: String = "JEE Main Session 1",
+              val examTargetEpochDay: Long = LocalDate.now().plusDays(92).toEpochDay(),
+              val dailyTargetFocusMinutes: Int = 360,
+              val currentStreakDays: Int = 4,
+              val lastActiveStreakEpochDay: Long = LocalDate.now().toEpochDay(),
+              val totalXp: Int = 1420,
+              val isFocusSessionActive: Boolean = false,
+              val strictModeEnabled: Boolean = true,
+              val reelsLoopBreakerEnabled: Boolean = true,
+              val adultAndSiteShieldEnabled: Boolean = true,
+              val blockedPackages: Set<String> = DEFAULT_BLOCKED_PACKAGES,
+              val blockedDomains: Set<String> = DEFAULT_BLOCKED_DOMAINS,
+              val perAppDailyLimitMinutes: Int = 30,
+              val scheduleEnabled: Boolean = true,
+              val studyWindowStartHour: Int = 6,
+              val studyWindowEndHour: Int = 12,
+              val sleepWindowStartHour: Int = 23,
+              val sleepWindowEndHour: Int = 5
+          ) {
+              companion object {
+                  val DEFAULT_BLOCKED_PACKAGES = setOf(
+                      "com.instagram.android",
+                      "com.zhiliaoapp.musically",
+                      "com.snapchat.android",
+                      "com.twitter.android",
+                      "com.reddit.frontpage",
+                      "com.netflix.mediaclient",
+                      "com.pubg.imobile",
+                      "com.dts.freefireth"
+                  )
+                  val DEFAULT_BLOCKED_DOMAINS = setOf(
+                      "instagram.com",
+                      "reddit.com",
+                      "x.com",
+                      "twitter.com",
+                      "facebook.com",
+                      "9gag.com",
+                      "twitch.tv"
+                  )
+              }
+          }
+
+          class UserPreferencesRepository(private val context: Context) {
+              private object Keys {
+                  val DARK_THEME = booleanPreferencesKey("dark_theme")
+                  val EXAM_NAME = stringPreferencesKey("exam_name")
+                  val EXAM_EPOCH_DAY = longPreferencesKey("exam_epoch_day")
+                  val DAILY_TARGET_MINS = intPreferencesKey("daily_target_mins")
+                  val STREAK_DAYS = intPreferencesKey("streak_days")
+                  val LAST_STREAK_DAY = longPreferencesKey("last_streak_day")
+                  val TOTAL_XP = intPreferencesKey("total_xp")
+                  val FOCUS_ACTIVE = booleanPreferencesKey("focus_active")
+                  val STRICT_MODE = booleanPreferencesKey("strict_mode")
+                  val REELS_SHIELD = booleanPreferencesKey("reels_shield")
+                  val SITE_SHIELD = booleanPreferencesKey("site_shield")
+                  val BLOCKED_PACKAGES = stringSetPreferencesKey("blocked_packages")
+                  val BLOCKED_DOMAINS = stringSetPreferencesKey("blocked_domains")
+                  val APP_DAILY_LIMIT_MINS = intPreferencesKey("app_daily_limit_mins")
+                  val SCHEDULE_ENABLED = booleanPreferencesKey("schedule_enabled")
+              }
+
+              val preferencesFlow: Flow<UserPreferencesState> = context.sankalpDataStore.data.map { prefs ->
+                  UserPreferencesState(
+                      darkTheme = prefs[Keys.DARK_THEME] ?: true,
+                      examTargetName = prefs[Keys.EXAM_NAME] ?: "JEE Main Session 1",
+                      examTargetEpochDay = prefs[Keys.EXAM_EPOCH_DAY] ?: LocalDate.now().plusDays(92).toEpochDay(),
+                      dailyTargetFocusMinutes = prefs[Keys.DAILY_TARGET_MINS] ?: 360,
+                      currentStreakDays = prefs[Keys.STREAK_DAYS] ?: 4,
+                      lastActiveStreakEpochDay = prefs[Keys.LAST_STREAK_DAY] ?: LocalDate.now().toEpochDay(),
+                      totalXp = prefs[Keys.TOTAL_XP] ?: 1420,
+                      isFocusSessionActive = prefs[Keys.FOCUS_ACTIVE] ?: false,
+                      strictModeEnabled = prefs[Keys.STRICT_MODE] ?: true,
+                      reelsLoopBreakerEnabled = prefs[Keys.REELS_SHIELD] ?: true,
+                      adultAndSiteShieldEnabled = prefs[Keys.SITE_SHIELD] ?: true,
+                      blockedPackages = prefs[Keys.BLOCKED_PACKAGES] ?: UserPreferencesState.DEFAULT_BLOCKED_PACKAGES,
+                      blockedDomains = prefs[Keys.BLOCKED_DOMAINS] ?: UserPreferencesState.DEFAULT_BLOCKED_DOMAINS,
+                      perAppDailyLimitMinutes = prefs[Keys.APP_DAILY_LIMIT_MINS] ?: 30,
+                      scheduleEnabled = prefs[Keys.SCHEDULE_ENABLED] ?: true
+                  )
+              }
+
+              suspend fun setDarkTheme(enabled: Boolean) { context.sankalpDataStore.edit { it[Keys.DARK_THEME] = enabled } }
+              suspend fun setFocusSessionActive(active: Boolean) { context.sankalpDataStore.edit { it[Keys.FOCUS_ACTIVE] = active } }
+              suspend fun setStrictMode(enabled: Boolean) { context.sankalpDataStore.edit { it[Keys.STRICT_MODE] = enabled } }
+              suspend fun setReelsShield(enabled: Boolean) { context.sankalpDataStore.edit { it[Keys.REELS_SHIELD] = enabled } }
+              suspend fun setSiteShield(enabled: Boolean) { context.sankalpDataStore.edit { it[Keys.SITE_SHIELD] = enabled } }
+              suspend fun setScheduleEnabled(enabled: Boolean) { context.sankalpDataStore.edit { it[Keys.SCHEDULE_ENABLED] = enabled } }
+
+              suspend fun toggleBlockedPackage(packageName: String) {
+                  context.sankalpDataStore.edit { prefs ->
+                      val current = (prefs[Keys.BLOCKED_PACKAGES] ?: UserPreferencesState.DEFAULT_BLOCKED_PACKAGES).toMutableSet()
+                      if (current.contains(packageName)) current.remove(packageName) else current.add(packageName)
+                      prefs[Keys.BLOCKED_PACKAGES] = current
+                  }
+              }
+
+              suspend fun updateExamCountdown(examName: String, daysFromToday: Long) {
+                  val targetDay = LocalDate.now().plusDays(daysFromToday.coerceAtLeast(1)).toEpochDay()
+                  context.sankalpDataStore.edit { prefs ->
+                      prefs[Keys.EXAM_NAME] = examName
+                      prefs[Keys.EXAM_EPOCH_DAY] = targetDay
+                  }
+              }
+
+              suspend fun awardXpAndCheckStreak(xpDelta: Int) {
+                  val today = LocalDate.now().toEpochDay()
+                  context.sankalpDataStore.edit { prefs ->
+                      val currentXp = prefs[Keys.TOTAL_XP] ?: 1420
+                      prefs[Keys.TOTAL_XP] = currentXp + xpDelta
+                      val lastDay = prefs[Keys.LAST_STREAK_DAY] ?: (today - 1)
+                      val currentStreak = prefs[Keys.STREAK_DAYS] ?: 1
+                      if (today == lastDay + 1L) {
+                          prefs[Keys.STREAK_DAYS] = currentStreak + 1
+                          prefs[Keys.LAST_STREAK_DAY] = today
+                      } else if (today > lastDay + 1L) {
+                          prefs[Keys.STREAK_DAYS] = 1
+                          prefs[Keys.LAST_STREAK_DAY] = today
+                      }
+                  }
+              }
+          }
+          EOF
+
+          cat << 'EOF' > app/src/main/java/com/sankalp/jee/service/SankalpGuardianService.kt
+          package com.sankalp.jee.service
+
+          import android.accessibilityservice.AccessibilityService
+          import android.view.accessibility.AccessibilityEvent
+          import android.view.accessibility.AccessibilityNodeInfo
+          import android.widget.Toast
+          import com.sankalp.jee.data.preferences.UserPreferencesState
+          import com.sankalp.jee.data.preferences.sankalpDataStore
+          import kotlinx.coroutines.CoroutineScope
+          import kotlinx.coroutines.Dispatchers
+          import kotlinx.coroutines.SupervisorJob
+          import kotlinx.coroutines.cancel
+          import kotlinx.coroutines.flow.collectLatest
+          import kotlinx.coroutines.launch
+          import java.time.LocalTime
+          import java.util.concurrent.atomic.AtomicInteger
+
+          class SankalpGuardianService : AccessibilityService() {
+              private val serviceScope = CoroutineScope(SupervisorJob() + Dispatchers.Main)
+              private var latestPrefs = UserPreferencesState()
+              private val shortVideoSwipeCounter = AtomicInteger(0)
+              private var lastShortSwipeTimestamp = 0L
+              private var lastToastTimestamp = 0L
+
+              override fun onServiceConnected() {
+                  super.onServiceConnected()
+                  serviceScope.launch {
+                      applicationContext.sankalpDataStore.data.collectLatest { prefs ->
+                          val focusActive = prefs[androidx.datastore.preferences.core.booleanPreferencesKey("focus_active")] ?: false
+                          val reelsShield = prefs[androidx.datastore.preferences.core.booleanPreferencesKey("reels_shield")] ?: true
+                          val siteShield = prefs[androidx.datastore.preferences.core.booleanPreferencesKey("site_shield")] ?: true
+                          val scheduleEnabled = prefs[androidx.datastore.preferences.core.booleanPreferencesKey("schedule_enabled")] ?: true
+                          val blockedApps = prefs[androidx.datastore.preferences.core.stringSetPreferencesKey("blocked_packages")]
+                              ?: UserPreferencesState.DEFAULT_BLOCKED_PACKAGES
+                          val blockedDomains = prefs[androidx.datastore.preferences.core.stringSetPreferencesKey("blocked_domains")]
+                              ?: UserPreferencesState.DEFAULT_BLOCKED_DOMAINS
+
+                          latestPrefs = latestPrefs.copy(
+                              isFocusSessionActive = focusActive,
+                              reelsLoopBreakerEnabled = reelsShield,
+                              adultAndSiteShieldEnabled = siteShield,
+                              scheduleEnabled = scheduleEnabled,
+                              blockedPackages = blockedApps,
+                              blockedDomains = blockedDomains
+                          )
+                      }
+                  }
+              }
+
+              override fun onAccessibilityEvent(event: AccessibilityEvent?) {
+                  val currentEvent = event ?: return
+                  val pkg = currentEvent.packageName?.toString() ?: return
+                  if (pkg == packageName || pkg.contains("systemui") || pkg.contains("launcher")) {
+                      shortVideoSwipeCounter.set(0)
+                      return
+                  }
+
+                  val shouldEnforceAppBlock = latestPrefs.isFocusSessionActive || isInsideScheduledBlockWindow()
+                  if (shouldEnforceAppBlock && latestPrefs.blockedPackages.contains(pkg)) {
+                      performGlobalAction(GLOBAL_ACTION_HOME)
+                      showCalmNudge("Sankalp Shield: Focus active. Returning to study sanctuary.")
+                      return
+                  }
+
+                  if (latestPrefs.reelsLoopBreakerEnabled && (pkg == "com.instagram.android" || pkg == "com.google.android.youtube")) {
+                      val rootNode = rootInActiveWindow
+                      if (rootNode != null && isInsideReelsOrShortsViewer(rootNode, pkg)) {
+                          if (currentEvent.eventType == AccessibilityEvent.TYPE_VIEW_SCROLLED) {
+                              val now = System.currentTimeMillis()
+                              if (now - lastShortSwipeTimestamp > 900L) {
+                                  lastShortSwipeTimestamp = now
+                                  if (shortVideoSwipeCounter.incrementAndGet() >= 2) {
+                                      shortVideoSwipeCounter.set(0)
+                                      performGlobalAction(GLOBAL_ACTION_HOME)
+                                      showCalmNudge("1 Short/Reel limit reached. Back to your JEE rank.")
+                                      return
+                                  }
+                              }
+                          }
+                      }
+                  }
+
+                  if (latestPrefs.adultAndSiteShieldEnabled && BROWSER_URL_BAR_IDS.containsKey(pkg)) {
+                      val rootNode = rootInActiveWindow ?: return
+                      val urlBarId = BROWSER_URL_BAR_IDS[pkg] ?: return
+                      val nodes = rootNode.findAccessibilityNodeInfosByViewId(urlBarId)
+                      val currentUrl = nodes?.firstOrNull()?.text?.toString()?.lowercase() ?: ""
+                      if (currentUrl.isNotBlank() && latestPrefs.blockedDomains.any { currentUrl.contains(it) }) {
+                          performGlobalAction(GLOBAL_ACTION_BACK)
+                          performGlobalAction(GLOBAL_ACTION_HOME)
+                          showCalmNudge("Sankalp Web Shield: Distracting site blocked.")
+                      }
+                  }
+              }
+
+              private fun isInsideScheduledBlockWindow(): Boolean {
+                  if (!latestPrefs.scheduleEnabled) return false
+                  val hour = LocalTime.now().hour
+                  val inStudySlot = hour in latestPrefs.studyWindowStartHour until latestPrefs.studyWindowEndHour
+                  val inSleepSlot = hour >= latestPrefs.sleepWindowStartHour || hour < latestPrefs.sleepWindowEndHour
+                  return inStudySlot || inSleepSlot
+              }
+
+              private fun isInsideReelsOrShortsViewer(root: AccessibilityNodeInfo, pkg: String): Boolean {
+                  if (pkg == "com.google.android.youtube") {
+                      if (!root.findAccessibilityNodeInfosByViewId("com.google.android.youtube:id/reel_recycler").isNullOrEmpty()) return true
+                      if (!root.findAccessibilityNodeInfosByViewId("com.google.android.youtube:id/reel_player_page_container").isNullOrEmpty()) return true
+                  }
+                  if (pkg == "com.instagram.android") {
+                      if (!root.findAccessibilityNodeInfosByViewId("com.instagram.android:id/clips_viewer_view_pager").isNullOrEmpty()) return true
+                      if (!root.findAccessibilityNodeInfosByViewId("com.instagram.android:id/reel_viewer_root").isNullOrEmpty()) return true
+                  }
+                  return false
+              }
+
+              private fun showCalmNudge(message: String) {
+                  val now = System.currentTimeMillis()
+                  if (now - lastToastTimestamp > 3200L) {
+                      lastToastTimestamp = now
+                      Toast.makeText(applicationContext, message, Toast.LENGTH_SHORT).show()
+                  }
+              }
+
+              override fun onInterrupt() {}
+              override fun onDestroy() {
+                  super.onDestroy()
+                  serviceScope.cancel()
+              }
+
+              companion object {
+                  private val BROWSER_URL_BAR_IDS = mapOf(
+                      "com.android.chrome" to "com.android.chrome:id/url_bar",
+                      "com.brave.browser" to "com.brave.browser:id/url_bar",
+                      "org.mozilla.firefox" to "org.mozilla.firefox:id/mozac_browser_toolbar_url_view",
+                      "com.microsoft.emmx" to "com.microsoft.emmx:id/url_bar"
+                  )
+              }
+          }
+          EOF
+
+          cat << 'EOF' > app/src/main/java/com/sankalp/jee/service/ScreenTimeHelper.kt
+          package com.sankalp.jee.service
+
+          import android.app.AppOpsManager
+          import android.content.Context
+          import android.os.Process
+          import android.provider.Settings
+
+          object ScreenTimeHelper {
+              fun hasUsageStatsPermission(context: Context): Boolean {
+                  val appOps = context.getSystemService(Context.APP_OPS_SERVICE) as AppOpsManager
+                  val mode = appOps.checkOpNoThrow(AppOpsManager.OPSTR_GET_USAGE_STATS, Process.myUid(), context.packageName)
+                  return mode == AppOpsManager.MODE_ALLOWED
+              }
+
+              fun isAccessibilityServiceEnabled(context: Context): Boolean {
+                  val enabledServices = Settings.Secure.getString(context.contentResolver, Settings.Secure.ENABLED_ACCESSIBILITY_SERVICES) ?: return false
+                  return enabledServices.contains(context.packageName)
+              }
+          }
+          EOF
+
+          cat << 'EOF' > app/src/main/java/com/sankalp/jee/service/DailyPulseWorker.kt
+          package com.sankalp.jee.service
+
+          import android.Manifest
+          import android.app.PendingIntent
+          import android.content.Context
+          import android.content.Intent
+          import android.content.pm.PackageManager
+          import android.os.Build
+          import androidx.core.app.NotificationCompat
+          import androidx.core.app.NotificationManagerCompat
+          import androidx.core.content.ContextCompat
+          import androidx.work.CoroutineWorker
+          import androidx.work.WorkerParameters
+          import com.sankalp.jee.MainActivity
+          import com.sankalp.jee.SankalpApp
+          import com.sankalp.jee.data.local.SankalpDatabase
+          import java.time.LocalDate
+
+          class DailyPulseWorker(appContext: Context, workerParams: WorkerParameters) : CoroutineWorker(appContext, workerParams) {
+              override suspend fun doWork(): Result {
+                  if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.TIRAMISU) {
+                      if (ContextCompat.checkSelfPermission(applicationContext, Manifest.permission.POST_NOTIFICATIONS) != PackageManager.PERMISSION_GRANTED) {
+                          return Result.success()
+                      }
+                  }
+                  val db = SankalpDatabase.getInstance(applicationContext)
+                  val dueCount = try { db.sankalpDao().getDueFlashcardCount(LocalDate.now().toEpochDay()) } catch (_: Exception) { 0 }
+                  val pendingIntent = PendingIntent.getActivity(
+                      applicationContext, 101,
+                      Intent(applicationContext, MainActivity::class.java),
+                      PendingIntent.FLAG_UPDATE_CURRENT or PendingIntent.FLAG_IMMUTABLE
+                  )
+                  val titleText = if (dueCount > 0) (dueCount.toString() + " Formula Flashcards Due") else "Protect Your JEE Focus Streak"
+                  val notification = NotificationCompat.Builder(applicationContext, SankalpApp.CHANNEL_DAILY_PULSE)
+                      .setSmallIcon(android.R.drawable.ic_lock_idle_alarm)
+                      .setContentTitle(titleText)
+                      .setContentText("Open Sankalp JEE to start a deep focus block or review due flashcards.")
+                      .setContentIntent(pendingIntent)
+                      .setAutoCancel(true)
+                      .build()
+                  try { NotificationManagerCompat.from(applicationContext).notify(2026, notification) } catch (_: SecurityException) {}
+                  return Result.success()
+              }
+          }
+          EOF
+
+          cat << 'EOF' > app/src/main/java/com/sankalp/jee/widget/SankalpWidgetReceiver.kt
+          package com.sankalp.jee.widget
+
+          import android.app.PendingIntent
+          import android.appwidget.AppWidgetManager
+          import android.appwidget.AppWidgetProvider
+          import android.content.ComponentName
+          import android.content.Context
+          import android.content.Intent
+          import android.widget.RemoteViews
+          import com.sankalp.jee.MainActivity
+          import com.sankalp.jee.R
+
+          class SankalpWidgetReceiver : AppWidgetProvider() {
+              override fun onUpdate(context: Context, appWidgetManager: AppWidgetManager, appWidgetIds: IntArray) {
+                  for (appWidgetId in appWidgetIds) {
+                      updateWidget(context, appWidgetManager, appWidgetId, null, null, null)
+                  }
+              }
+
+              companion object {
+                  fun pushLiveUpdate(context: Context, daysLeftText: String, focusStatsText: String, nextTaskText: String) {
+                      val manager = AppWidgetManager.getInstance(context)
+                      val ids = manager.getAppWidgetIds(ComponentName(context, SankalpWidgetReceiver::class.java))
+                      for (id in ids) {
+                          updateWidget(context, manager, id, daysLeftText, focusStatsText, nextTaskText)
+                      }
+                  }
+
+                  private fun updateWidget(context: Context, appWidgetManager: AppWidgetManager, appWidgetId: Int, daysLeftText: String?, focusStatsText: String?, nextTaskText: String?) {
+                      val views = RemoteViews(context.packageName, R.layout.widget_sankalp_layout)
+                      if (daysLeftText != null) views.setTextViewText(R.id.widget_days_left, daysLeftText)
+                      if (focusStatsText != null) views.setTextViewText(R.id.widget_focus_stats, focusStatsText)
+                      if (nextTaskText != null) views.setTextViewText(R.id.widget_next_task, nextTaskText)
+                      val pendingIntent = PendingIntent.getActivity(context, 0, Intent(context, MainActivity::class.java), PendingIntent.FLAG_UPDATE_CURRENT or PendingIntent.FLAG_IMMUTABLE)
+                      views.setOnClickPendingIntent(R.id.widget_root, pendingIntent)
+                      appWidgetManager.updateAppWidget(appWidgetId, views)
+                  }
+              }
+          }
+          EOF
+
+          cat << 'EOF' > app/src/main/java/com/sankalp/jee/ui/theme/Theme.kt
+          package com.sankalp.jee.ui.theme
+
+          import androidx.compose.foundation.shape.RoundedCornerShape
+          import androidx.compose.material3.MaterialTheme
+          import androidx.compose.material3.Shapes
+          import androidx.compose.material3.Typography
+          import androidx.compose.material3.darkColorScheme
+          import androidx.compose.material3.lightColorScheme
+          import androidx.compose.runtime.Composable
+          import androidx.compose.ui.graphics.Color
+          import androidx.compose.ui.text.TextStyle
+          import androidx.compose.ui.text.font.FontFamily
+          import androidx.compose.ui.text.font.FontWeight
+          import androidx.compose.ui.unit.dp
+          import androidx.compose.ui.unit.sp
+          import com.sankalp.jee.data.local.Subject
+
+          object SankalpPalette {
+              val DarkBackground = Color(0xFF0B0F17)
+              val DarkSurface = Color(0xFF131924)
+              val DarkSurfaceElevated = Color(0xFF1C2433)
+              val DarkBorder = Color(0xFF263042)
+              val LightBackground = Color(0xFFFAF7F2)
+              val LightSurface = Color(0xFFFFFFFF)
+              val LightSurfaceElevated = Color(0xFFF2ECE1)
+              val LightBorder = Color(0xFFE2D9C8)
+              val KesariAmber = Color(0xFFF59E0B)
+              val KesariAmberDeep = Color(0xFFD97706)
+              val PrussianTeal = Color(0xFF2DD4BF)
+              val PrussianTealDeep = Color(0xFF0D9488)
+              val IndigoPulse = Color(0xFF818CF8)
+              val PhysicsCyan = Color(0xFF38BDF8)
+              val ChemistryEmerald = Color(0xFF34D399)
+              val MathsCoral = Color(0xFFFB7185)
+              val SuccessGreen = Color(0xFF22C55E)
+              val WarningGold = Color(0xFFFBBF24)
+              val DangerCrimson = Color(0xFFEF4444)
+
+              fun subjectColor(subject: Subject): Color = when (subject) {
+                  Subject.PHYSICS -> PhysicsCyan
+                  Subject.CHEMISTRY -> ChemistryEmerald
+                  Subject.MATHEMATICS -> MathsCoral
+              }
+          }
+
+          private val MidnightKusumColorScheme = darkColorScheme(
+              primary = SankalpPalette.KesariAmber,
+              onPrimary = Color(0xFF0B0F17),
+              primaryContainer = Color(0xFF3B2606),
+              onPrimaryContainer = Color(0xFFFDE68A),
+              secondary = SankalpPalette.PrussianTeal,
+              onSecondary = Color(0xFF042F2E),
+              secondaryContainer = Color(0xFF113837),
+              onSecondaryContainer = Color(0xFF99F6E4),
+              tertiary = SankalpPalette.IndigoPulse,
+              background = SankalpPalette.DarkBackground,
+              onBackground = Color(0xFFF3F4F6),
+              surface = SankalpPalette.DarkSurface,
+              onSurface = Color(0xFFF3F4F6),
+              surfaceVariant = SankalpPalette.DarkSurfaceElevated,
+              onSurfaceVariant = Color(0xFF9CA3AF),
+              outline = SankalpPalette.DarkBorder,
+              error = SankalpPalette.DangerCrimson
+          )
+
+          private val WarmKhadiColorScheme = lightColorScheme(
+              primary = SankalpPalette.KesariAmberDeep,
+              onPrimary = Color.White,
+              primaryContainer = Color(0xFFFEF3C7),
+              onPrimaryContainer = Color(0xFF78350F),
+              secondary = SankalpPalette.PrussianTealDeep,
+              onSecondary = Color.White,
+              secondaryContainer = Color(0xFFCCFBF1),
+              onSecondaryContainer = Color(0xFF134E4A),
+              tertiary = Color(0xFF4F46E5),
+              background = SankalpPalette.LightBackground,
+              onBackground = Color(0xFF111827),
+              surface = SankalpPalette.LightSurface,
+              onSurface = Color(0xFF111827),
+              surfaceVariant = SankalpPalette.LightSurfaceElevated,
+              onSurfaceVariant = Color(0xFF4B5563),
+              outline = SankalpPalette.LightBorder,
+              error = Color(0xFFDC2626)
+          )
+
+          val SankalpTypography = Typography(
+              displayLarge = TextStyle(fontFamily = FontFamily.Monospace, fontWeight = FontWeight.Bold, fontSize = 54.sp, lineHeight = 60.sp, fontFeatureSettings = "tnum"),
+              headlineLarge = TextStyle(fontFamily = FontFamily.SansSerif, fontWeight = FontWeight.Bold, fontSize = 26.sp, lineHeight = 32.sp),
+              headlineMedium = TextStyle(fontFamily = FontFamily.SansSerif, fontWeight = FontWeight.SemiBold, fontSize = 20.sp, lineHeight = 26.sp),
+              titleMedium = TextStyle(fontFamily = FontFamily.SansSerif, fontWeight = FontWeight.SemiBold, fontSize = 16.sp, lineHeight = 22.sp),
+              bodyLarge = TextStyle(fontFamily = FontFamily.SansSerif, fontWeight = FontWeight.Normal, fontSize = 15.sp, lineHeight = 22.sp),
+              bodyMedium = TextStyle(fontFamily = FontFamily.SansSerif, fontWeight = FontWeight.Normal, fontSize = 14.sp, lineHeight = 20.sp),
+              labelSmall = TextStyle(fontFamily = FontFamily.SansSerif, fontWeight = FontWeight.Bold, fontSize = 11.sp, lineHeight = 14.sp)
+          )
+
+          val SankalpShapes = Shapes(
+              small = RoundedCornerShape(8.dp),
+              medium = RoundedCornerShape(14.dp),
+              large = RoundedCornerShape(22.dp)
+          )
+
+          @Composable
+          fun SankalpTheme(darkTheme: Boolean = true, content: @Composable () -> Unit) {
+              MaterialTheme(
+                  colorScheme = if (darkTheme) MidnightKusumColorScheme else WarmKhadiColorScheme,
+                  typography = SankalpTypography,
+                  shapes = SankalpShapes,
+                  content = content
+              )
+          }
+          EOF
+
+          cat << 'EOF' > app/src/main/java/com/sankalp/jee/ui/components/CommonComponents.kt
+          package com.sankalp.jee.ui.components
+
+          import androidx.compose.animation.core.Animatable
+          import androidx.compose.animation.core.FastOutSlowInEasing
+          import androidx.compose.animation.core.tween
+          import androidx.compose.foundation.BorderStroke
+          import androidx.compose.foundation.Canvas
+          import androidx.compose.foundation.background
+          import androidx.compose.foundation.layout.Arrangement
+          import androidx.compose.foundation.layout.Box
+          import androidx.compose.foundation.layout.Column
+          import androidx.compose.foundation.layout.ColumnScope
+          import androidx.compose.foundation.layout.Row
+          import androidx.compose.foundation.layout.Spacer
+          import androidx.compose.foundation.layout.fillMaxSize
+          import androidx.compose.foundation.layout.fillMaxWidth
+          import androidx.compose.foundation.layout.height
+          import androidx.compose.foundation.layout.padding
+          import androidx.compose.foundation.layout.size
+          import androidx.compose.foundation.layout.width
+          import androidx.compose.foundation.shape.RoundedCornerShape
+          import androidx.compose.material3.Card
+          import androidx.compose.material3.CardDefaults
+          import androidx.compose.material3.Icon
+          import androidx.compose.material3.MaterialTheme
+          import androidx.compose.material3.Surface
+          import androidx.compose.material3.Text
+          import androidx.compose.runtime.Composable
+          import androidx.compose.runtime.LaunchedEffect
+          import androidx.compose.runtime.remember
+          import androidx.compose.ui.Alignment
+          import androidx.compose.ui.Modifier
+          import androidx.compose.ui.geometry.Offset
+          import androidx.compose.ui.geometry.Size
+          import androidx.compose.ui.graphics.Color
+          import androidx.compose.ui.graphics.StrokeCap
+          import androidx.compose.ui.graphics.drawscope.Stroke
+          import androidx.compose.ui.graphics.vector.ImageVector
+          import androidx.compose.ui.text.font.FontFamily
+          import androidx.compose.ui.text.font.FontWeight
+          import androidx.compose.ui.unit.Dp
+          import androidx.compose.ui.unit.dp
+          import androidx.compose.ui.unit.sp
+          import com.sankalp.jee.data.local.Subject
+          import com.sankalp.jee.ui.theme.SankalpPalette
+          import kotlin.math.cos
+          import kotlin.math.sin
+          import kotlin.random.Random
+
+          @Composable
+          fun SankalpCard(
+              modifier: Modifier = Modifier,
+              borderColor: Color = MaterialTheme.colorScheme.outline,
+              containerColor: Color = MaterialTheme.colorScheme.surface,
+              content: @Composable ColumnScope.() -> Unit
+          ) {
+              Card(
+                  modifier = modifier.fillMaxWidth(),
+                  shape = MaterialTheme.shapes.medium,
+                  colors = CardDefaults.cardColors(containerColor = containerColor),
+                  border = BorderStroke(1.dp, borderColor)
+              ) {
+                  Column(modifier = Modifier.padding(16.dp), content = content)
+              }
+          }
+
+          @Composable
+          fun SubjectPill(subject: Subject, modifier: Modifier = Modifier) {
+              val accent = SankalpPalette.subjectColor(subject)
+              Surface(
+                  modifier = modifier,
+                  shape = RoundedCornerShape(8.dp),
+                  color = accent.copy(alpha = 0.14f),
+                  border = BorderStroke(1.dp, accent.copy(alpha = 0.45f))
+              ) {
+                  Text(
+                      text = subject.shortCode,
+                      color = accent,
+                      style = MaterialTheme.typography.labelSmall,
+                      modifier = Modifier.padding(horizontal = 8.dp, vertical = 4.dp)
+                  )
+              }
+          }
+
+          @Composable
+          fun MetricBadge(label: String, value: String, accentColor: Color, modifier: Modifier = Modifier) {
+              Surface(
+                  modifier = modifier,
+                  shape = RoundedCornerShape(12.dp),
+                  color = MaterialTheme.colorScheme.surfaceVariant.copy(alpha = 0.65f),
+                  border = BorderStroke(1.dp, MaterialTheme.colorScheme.outline)
+              ) {
+                  Column(modifier = Modifier.padding(horizontal = 12.dp, vertical = 10.dp)) {
+                      Text(text = label.uppercase(), style = MaterialTheme.typography.labelSmall, color = MaterialTheme.colorScheme.onSurfaceVariant)
+                      Spacer(modifier = Modifier.height(4.dp))
+                      Text(text = value, fontFamily = FontFamily.Monospace, fontWeight = FontWeight.Bold, fontSize = 18.sp, color = accentColor)
+                  }
+              }
+          }
+
+          @Composable
+          fun AnimatedRingMeter(
+              progress: Float,
+              size: Dp = 110.dp,
+              strokeWidth: Dp = 10.dp,
+              activeColor: Color = SankalpPalette.KesariAmber,
+              trackColor: Color = MaterialTheme.colorScheme.surfaceVariant,
+              centerContent: @Composable () -> Unit
+          ) {
+              val clamped = progress.coerceIn(0f, 1f)
+              Box(modifier = Modifier.size(size), contentAlignment = Alignment.Center) {
+                  Canvas(modifier = Modifier.fillMaxSize()) {
+                      val strokePx = strokeWidth.toPx()
+                      val arcDiameter = this.size.minDimension - strokePx
+                      val topLeft = Offset(strokePx / 2f, strokePx / 2f)
+                      drawArc(color = trackColor, startAngle = -90f, sweepAngle = 360f, useCenter = false, topLeft = topLeft, size = Size(arcDiameter, arcDiameter), style = Stroke(width = strokePx, cap = StrokeCap.Round))
+                      drawArc(color = activeColor, startAngle = -90f, sweepAngle = 360f * clamped, useCenter = false, topLeft = topLeft, size = Size(arcDiameter, arcDiameter), style = Stroke(width = strokePx, cap = StrokeCap.Round))
+                  }
+                  centerContent()
+              }
+          }
+
+          @Composable
+          fun SectionHeader(title: String, subtitle: String? = null, icon: ImageVector? = null, accent: Color = MaterialTheme.colorScheme.primary) {
+              Row(modifier = Modifier.fillMaxWidth().padding(vertical = 4.dp), verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.SpaceBetween) {
+                  Row(verticalAlignment = Alignment.CenterVertically) {
+                      if (icon != null) {
+                          Box(modifier = Modifier.size(32.dp).background(accent.copy(alpha = 0.14f), RoundedCornerShape(8.dp)), contentAlignment = Alignment.Center) {
+                              Icon(imageVector = icon, contentDescription = title, tint = accent, modifier = Modifier.size(18.dp))
+                          }
+                          Spacer(modifier = Modifier.width(10.dp))
+                      }
+                      Column {
+                          Text(text = title, style = MaterialTheme.typography.titleMedium, color = MaterialTheme.colorScheme.onBackground)
+                          if (subtitle != null) {
+                              Text(text = subtitle, style = MaterialTheme.typography.bodyMedium, color = MaterialTheme.colorScheme.onSurfaceVariant, fontSize = 12.sp)
+                          }
+                      }
+                  }
+              }
+          }
+
+          private data class ConfettiParticle(val angleRad: Float, val speed: Float, val color: Color, val radius: Float)
+
+          @Composable
+          fun CelebrationConfettiOverlay(triggerKey: Int, modifier: Modifier = Modifier) {
+              if (triggerKey <= 0) return
+              val progress = remember(triggerKey) { Animatable(0f) }
+              val particles = remember(triggerKey) {
+                  val colors = listOf(SankalpPalette.KesariAmber, SankalpPalette.PrussianTeal, SankalpPalette.PhysicsCyan, SankalpPalette.ChemistryEmerald, SankalpPalette.MathsCoral)
+                  List(40) {
+                      ConfettiParticle(
+                          angleRad = (Random.nextFloat() * Math.PI * 2).toFloat(),
+                          speed = Random.nextFloat() * 340f + 90f,
+                          color = colors[it % colors.size],
+                          radius = Random.nextFloat() * 6f + 4f
+                      )
+                  }
+              }
+              LaunchedEffect(triggerKey) {
+                  progress.snapTo(0f)
+                  progress.animateTo(1f, tween(1250, easing = FastOutSlowInEasing))
+              }
+              if (progress.value < 0.99f) {
+                  Canvas(modifier = modifier.fillMaxSize()) {
+                      val center = Offset(size.width / 2f, size.height / 3f)
+                      val t = progress.value
+                      val alpha = (1f - t).coerceIn(0f, 1f)
+                      particles.forEach { p ->
+                          val dx = cos(p.angleRad) * p.speed * t
+                          val dy = sin(p.angleRad) * p.speed * t + (220f * t * t)
+                          drawCircle(color = p.color.copy(alpha = alpha), radius = p.radius, center = Offset(center.x + dx, center.y + dy))
+                      }
+                  }
+              }
+          }
+          EOF
+
+          cat << 'EOF' > app/src/main/java/com/sankalp/jee/ui/viewmodel/SankalpViewModel.kt
+          package com.sankalp.jee.ui.viewmodel
+
+          import android.app.Application
+          import androidx.lifecycle.AndroidViewModel
+          import androidx.lifecycle.viewModelScope
+          import com.sankalp.jee.data.local.ErrorCategory
+          import com.sankalp.jee.data.local.ErrorLogEntity
+          import com.sankalp.jee.data.local.FlashcardEntity
+          import com.sankalp.jee.data.local.FocusMode
+          import com.sankalp.jee.data.local.FocusSessionEntity
+          import com.sankalp.jee.data.local.MockTestEntity
+          import com.sankalp.jee.data.local.QuickNoteEntity
+          import com.sankalp.jee.data.local.SankalpDatabase
+          import com.sankalp.jee.data.local.SeedData
+          import com.sankalp.jee.data.local.StudyTaskEntity
+          import com.sankalp.jee.data.local.Subject
+          import com.sankalp.jee.data.local.SyllabusChapterEntity
+          import com.sankalp.jee.data.local.TopicStatus
+          import com.sankalp.jee.data.preferences.UserPreferencesRepository
+          import com.sankalp.jee.data.preferences.UserPreferencesState
+          import com.sankalp.jee.widget.SankalpWidgetReceiver
+          import kotlinx.coroutines.Job
+          import kotlinx.coroutines.delay
+          import kotlinx.coroutines.flow.MutableStateFlow
+          import kotlinx.coroutines.flow.SharingStarted
+          import kotlinx.coroutines.flow.StateFlow
+          import kotlinx.coroutines.flow.asStateFlow
+          import kotlinx.coroutines.flow.combine
+          import kotlinx.coroutines.flow.stateIn
+          import kotlinx.coroutines.launch
+          import java.time.LocalDate
+          import kotlin.math.roundToInt
+
+          data class WeaknessRadarItem(
+              val chapter: SyllabusChapterEntity,
+              val errorCount: Int,
+              val priorityScore: Float,
+              val reason: String
+          )
+
+          data class TimerUiState(
+              val mode: FocusMode = FocusMode.POMODORO,
+              val selectedSubject: Subject = Subject.PHYSICS,
+              val targetMinutes: Int = 50,
+              val remainingSeconds: Int = 50 * 60,
+              val elapsedSeconds: Int = 0,
+              val isRunning: Boolean = false,
+              val celebrationBurstKey: Int = 0
+          )
+
+          data class SankalpDashboardMetrics(
+              val daysToExam: Long = 92,
+              val todayFocusMinutes: Int = 0,
+              val weekFocusMinutes: Int = 0,
+              val focusScoreToday: Int = 0,
+              val levelTitle: String = "Abhyasi Lv 3",
+              val xpProgressInLevel: Float = 0.42f,
+              val syllabusCompletionPercent: Int = 0,
+              val backlogCount: Int = 0,
+              val dueFlashcardsCount: Int = 0,
+              val weaknessRadarTop5: List<WeaknessRadarItem> = emptyList()
+          )
+
+          class SankalpViewModel(application: Application) : AndroidViewModel(application) {
+              private val appContext = application.applicationContext
+              private val dao = SankalpDatabase.getInstance(appContext).sankalpDao()
+              private val prefsRepo = UserPreferencesRepository(appContext)
+
+              val userPrefs: StateFlow<UserPreferencesState> = prefsRepo.preferencesFlow.stateIn(viewModelScope, SharingStarted.WhileSubscribed(5_000), UserPreferencesState())
+              val chapters: StateFlow<List<SyllabusChapterEntity>> = dao.observeAllChapters().stateIn(viewModelScope, SharingStarted.WhileSubscribed(5_000), emptyList())
+              val tasks: StateFlow<List<StudyTaskEntity>> = dao.observeAllTasks().stateIn(viewModelScope, SharingStarted.WhileSubscribed(5_000), emptyList())
+              val focusSessions: StateFlow<List<FocusSessionEntity>> = dao.observeFocusSessions().stateIn(viewModelScope, SharingStarted.WhileSubscribed(5_000), emptyList())
+              val mockTests: StateFlow<List<MockTestEntity>> = dao.observeMockTests().stateIn(viewModelScope, SharingStarted.WhileSubscribed(5_000), emptyList())
+              val errorLogs: StateFlow<List<ErrorLogEntity>> = dao.observeErrorLogs().stateIn(viewModelScope, SharingStarted.WhileSubscribed(5_000), emptyList())
+              val flashcards: StateFlow<List<FlashcardEntity>> = dao.observeFlashcards().stateIn(viewModelScope, SharingStarted.WhileSubscribed(5_000), emptyList())
+              val quickNotes: StateFlow<List<QuickNoteEntity>> = dao.observeQuickNotes().stateIn(viewModelScope, SharingStarted.WhileSubscribed(5_000), emptyList())
+
+              private val _timerState = MutableStateFlow(TimerUiState())
+              val timerState: StateFlow<TimerUiState> = _timerState.asStateFlow()
+
+              private var timerJob: Job? = null
+
+              val dashboardMetrics: StateFlow<SankalpDashboardMetrics> = combine(
+                  userPrefs, chapters, tasks, focusSessions,
+                  combine(errorLogs, flashcards) { errs, cards -> errs to cards }
+              ) { prefs, chaps, taskList, sessions, (errors, cards) ->
+                  val today = LocalDate.now().toEpochDay()
+                  val daysLeft = (prefs.examTargetEpochDay - today).coerceAtLeast(0L)
+                  val todayFocusMins = sessions.filter { it.epochDay == today }.sumOf { it.durationMinutes }
+                  val weekFocusMins = sessions.filter { it.epochDay >= today - 6 }.sumOf { it.durationMinutes }
+                  val targetRatio = (todayFocusMins.toFloat() / prefs.dailyTargetFocusMinutes.coerceAtLeast(60)).coerceIn(0f, 1f)
+                  val taskBonus = (taskList.count { it.isCompleted } * 6).coerceAtMost(20)
+                  val focusScore = ((targetRatio * 80f).roundToInt() + taskBonus).coerceIn(0, 100)
+                  val masteredOrRevised = chaps.count { it.status == TopicStatus.MASTERED || it.status == TopicStatus.REVISED }
+                  val syllabusPct = if (chaps.isEmpty()) 0 else ((masteredOrRevised * 100f) / chaps.size).roundToInt()
+                  val backlogs = chaps.count { it.isBacklog } + taskList.count { it.isBacklog && !it.isCompleted }
+                  val dueCards = cards.count { it.nextReviewEpochDay <= today }
+
+                  val errorCountByChapter = errors.groupingBy { it.chapterName }.eachCount()
+                  val radar = chaps.map { chap ->
+                      val errCount = errorCountByChapter[chap.chapterName] ?: 0
+                      val masteryPenalty = when (chap.status) {
+                          TopicStatus.NOT_STARTED -> 6f
+                          TopicStatus.LEARNING -> 4f
+                          TopicStatus.REVISED -> 1.5f
+                          TopicStatus.MASTERED -> 0f
+                      }
+                      val score = ((6 - chap.confidence) * chap.weightage.multiplier * 3f) + (errCount * 4.5f) + masteryPenalty + (if (chap.isBacklog) 5f else 0f)
+                      val reason = "Mock errors: " + errCount.toString() + " | Confidence " + chap.confidence.toString() + "/5 | " + chap.weightage.label
+                      WeaknessRadarItem(chap, errCount, score, reason)
+                  }.sortedByDescending { it.priorityScore }.take(5)
+
+                  val levelNumber = (prefs.totalXp / 500) + 1
+                  val levelLabel = "Abhyasi Lv " + levelNumber.toString()
+                  val xpInLevel = (prefs.totalXp % 500) / 500f
+
+                  SankalpWidgetReceiver.pushLiveUpdate(
+                      context = appContext,
+                      daysLeftText = daysLeft.toString() + " DAYS LEFT",
+                      focusStatsText = "Today: " + todayFocusMins.toString() + "m | Streak: " + prefs.currentStreakDays.toString() + "d",
+                      nextTaskText = "Next: " + (taskList.firstOrNull { !it.isCompleted }?.title ?: "Revise SM-2 Flashcards")
+                  )
+
+                  SankalpDashboardMetrics(daysLeft, todayFocusMins, weekFocusMins, focusScore, levelLabel, xpInLevel, syllabusPct, backlogs, dueCards, radar)
+              }.stateIn(viewModelScope, SharingStarted.WhileSubscribed(5_000), SankalpDashboardMetrics())
+
+              init {
+                  viewModelScope.launch {
+                      if (dao.getChapterCount() == 0) {
+                          dao.insertChapters(SeedData.initialSyllabus())
+                          SeedData.initialTasks().forEach { dao.insertTask(it) }
+                          dao.insertFlashcards(SeedData.initialFlashcards())
+                          SeedData.initialMockTests().forEach { dao.insertMockTest(it) }
+                          SeedData.initialErrorLogs().forEach { dao.insertErrorLog(it) }
+                          SeedData.initialQuickNotes().forEach { dao.insertQuickNote(it) }
+                      }
+                  }
+              }
+
+              fun configureTimer(mode: FocusMode, minutes: Int, subject: Subject) {
+                  if (_timerState.value.isRunning) return
+                  _timerState.value = _timerState.value.copy(
+                      mode = mode,
+                      selectedSubject = subject,
+                      targetMinutes = minutes,
+                      remainingSeconds = if (mode == FocusMode.STOPWATCH) 0 else minutes * 60,
+                      elapsedSeconds = 0
+                  )
+              }
+
+              fun startFocusSession() {
+                  if (_timerState.value.isRunning) return
+                  _timerState.value = _timerState.value.copy(isRunning = true)
+                  viewModelScope.launch { prefsRepo.setFocusSessionActive(true) }
+                  timerJob?.cancel()
+                  timerJob = viewModelScope.launch {
+                      while (_timerState.value.isRunning) {
+                          delay(1_000L)
+                          val current = _timerState.value
+                          if (current.mode == FocusMode.STOPWATCH) {
+                              _timerState.value = current.copy(elapsedSeconds = current.elapsedSeconds + 1, remainingSeconds = current.elapsedSeconds + 1)
+                          } else {
+                              val nextRem = current.remainingSeconds - 1
+                              if (nextRem <= 0) {
+                                  completeFocusSession(true)
+                                  break
+                              } else {
+                                  _timerState.value = current.copy(remainingSeconds = nextRem, elapsedSeconds = current.elapsedSeconds + 1)
+                              }
+                          }
+                      }
+                  }
+              }
+
+              fun stopOrForfeitFocusSession(cleanStopForStopwatch: Boolean = false) {
+                  val current = _timerState.value
+                  timerJob?.cancel()
+                  val minutesCompleted = (current.elapsedSeconds / 60).coerceAtLeast(if (cleanStopForStopwatch) 1 else 0)
+                  _timerState.value = current.copy(
+                      isRunning = false,
+                      remainingSeconds = if (current.mode == FocusMode.STOPWATCH) 0 else current.targetMinutes * 60,
+                      elapsedSeconds = 0,
+                      celebrationBurstKey = if (cleanStopForStopwatch) current.celebrationBurstKey + 1 else current.celebrationBurstKey
+                  )
+                  viewModelScope.launch {
+                      prefsRepo.setFocusSessionActive(false)
+                      if (minutesCompleted >= 1) {
+                          dao.insertFocusSession(FocusSessionEntity(mode = current.mode, subject = current.selectedSubject, durationMinutes = minutesCompleted, epochDay = LocalDate.now().toEpochDay(), timestampMillis = System.currentTimeMillis(), completedCleanly = cleanStopForStopwatch))
+                          if (cleanStopForStopwatch) prefsRepo.awardXpAndCheckStreak(minutesCompleted * 2)
+                      }
+                  }
+              }
+
+              private fun completeFocusSession(cleanCompletion: Boolean) {
+                  val current = _timerState.value
+                  timerJob?.cancel()
+                  val mins = current.targetMinutes.coerceAtLeast(1)
+                  _timerState.value = current.copy(isRunning = false, remainingSeconds = current.targetMinutes * 60, elapsedSeconds = 0, celebrationBurstKey = current.celebrationBurstKey + 1)
+                  viewModelScope.launch {
+                      prefsRepo.setFocusSessionActive(false)
+                      dao.insertFocusSession(FocusSessionEntity(mode = current.mode, subject = current.selectedSubject, durationMinutes = mins, epochDay = LocalDate.now().toEpochDay(), timestampMillis = System.currentTimeMillis(), completedCleanly = cleanCompletion))
+                      prefsRepo.awardXpAndCheckStreak(mins * 3)
+                  }
+              }
+
+              fun toggleDarkTheme(enabled: Boolean) = viewModelScope.launch { prefsRepo.setDarkTheme(enabled) }
+              fun toggleStrictMode(enabled: Boolean) = viewModelScope.launch { prefsRepo.setStrictMode(enabled) }
+              fun toggleReelsShield(enabled: Boolean) = viewModelScope.launch { prefsRepo.setReelsShield(enabled) }
+              fun toggleScheduleEnabled(enabled: Boolean) = viewModelScope.launch { prefsRepo.setScheduleEnabled(enabled) }
+              fun toggleBlockedPackage(pkg: String) = viewModelScope.launch { prefsRepo.toggleBlockedPackage(pkg) }
+              fun updateExamCountdown(name: String, daysLeft: Long) = viewModelScope.launch { prefsRepo.updateExamCountdown(name, daysLeft) }
+
+              fun updateChapterMastery(chapter: SyllabusChapterEntity, status: TopicStatus, confidence: Int, solvedPyqs: Int, isBacklog: Boolean, completedTopicsCsv: String = chapter.completedTopicsCsv) {
+                  viewModelScope.launch {
+                      dao.updateChapter(chapter.copy(status = status, confidence = confidence.coerceIn(1, 5), solvedPyqs = solvedPyqs.coerceIn(0, chapter.totalPyqs), isBacklog = isBacklog, completedTopicsCsv = completedTopicsCsv, lastStudiedEpochDay = LocalDate.now().toEpochDay()))
+                      prefsRepo.awardXpAndCheckStreak(15)
+                  }
+              }
+
+              fun addStudyTask(title: String, subject: Subject, minutes: Int, isBacklog: Boolean) {
+                  if (title.isBlank()) return
+                  viewModelScope.launch {
+                      val maxOrder = tasks.value.maxOfOrNull { it.sortOrder } ?: 0
+                      dao.insertTask(StudyTaskEntity(title = title.trim(), subject = subject, estimatedMinutes = minutes.coerceIn(15, 360), targetEpochDay = LocalDate.now().toEpochDay(), isBacklog = isBacklog, sortOrder = maxOrder + 1))
+                  }
+              }
+
+              fun toggleTaskCompleted(task: StudyTaskEntity) {
+                  viewModelScope.launch {
+                      val nextState = !task.isCompleted
+                      dao.updateTask(task.copy(isCompleted = nextState))
+                      if (nextState) prefsRepo.awardXpAndCheckStreak(25)
+                  }
+              }
+
+              fun deleteTask(task: StudyTaskEntity) = viewModelScope.launch { dao.deleteTask(task) }
+
+              fun logMockTest(testName: String, examPattern: String, maxMarks: Int, physics: Int, chemistry: Int, maths: Int, accuracyPercent: Int, durationMins: Int) {
+                  viewModelScope.launch {
+                      val total = (physics + chemistry + maths).coerceAtMost(maxMarks)
+                      dao.insertMockTest(MockTestEntity(testName = testName.ifBlank { "Full Syllabus Mock" }, examPattern = examPattern, epochDay = LocalDate.now().toEpochDay(), maxMarks = maxMarks, totalScore = total, physicsScore = physics, chemistryScore = chemistry, mathsScore = maths, accuracyPercent = accuracyPercent.coerceIn(0, 100), durationMinutesTaken = durationMins, avgSecondsPerQuestion = ((durationMins * 60f) / 75f).roundToInt()))
+                      prefsRepo.awardXpAndCheckStreak(80)
+                  }
+              }
+
+              fun logQuestionError(subject: Subject, chapterName: String, category: ErrorCategory, questionSummary: String, oneLineFix: String, alsoCreateFlashcard: Boolean) {
+                  if (questionSummary.isBlank() || oneLineFix.isBlank()) return
+                  viewModelScope.launch {
+                      val today = LocalDate.now().toEpochDay()
+                      dao.insertErrorLog(ErrorLogEntity(subject = subject, chapterName = chapterName, errorCategory = category, questionSummary = questionSummary.trim(), oneLineFix = oneLineFix.trim(), epochDay = today))
+                      if (alsoCreateFlashcard) {
+                          dao.insertFlashcard(FlashcardEntity(subject = subject, chapterName = chapterName, frontPrompt = "Mistake Fix [" + chapterName + "]: " + questionSummary.trim(), backAnswer = oneLineFix.trim(), isFormula = false, nextReviewEpochDay = today))
+                      }
+                      prefsRepo.awardXpAndCheckStreak(20)
+                  }
+              }
+
+              fun reviewFlashcardSm2(card: FlashcardEntity, quality: Int) {
+                  viewModelScope.launch {
+                      val today = LocalDate.now().toEpochDay()
+                      val q = quality.coerceIn(0, 5)
+                      val newReps = if (q < 3) 0 else card.repetitions + 1
+                      val newInterval = if (q < 3) 1 else when (newReps) {
+                          1 -> 1
+                          2 -> 4
+                          else -> (card.intervalDays * card.easinessFactor).roundToInt().coerceAtLeast(1)
+                      }
+                      val efDelta = 0.1f - (5 - q) * (0.08f + (5 - q) * 0.02f)
+                      val newEf = (card.easinessFactor + efDelta).coerceAtLeast(1.3f)
+                      dao.updateFlashcard(card.copy(repetitions = newReps, intervalDays = newInterval, easinessFactor = newEf, nextReviewEpochDay = today + newInterval))
+                      prefsRepo.awardXpAndCheckStreak(10)
+                  }
+              }
+          }
+          EOF
+
+          cat << 'EOF' > app/src/main/java/com/sankalp/jee/MainActivity.kt
+          package com.sankalp.jee
+
+          import android.os.Bundle
+          import androidx.activity.ComponentActivity
+          import androidx.activity.compose.setContent
+          import androidx.compose.foundation.layout.Box
+          import androidx.compose.foundation.layout.fillMaxSize
+          import androidx.compose.foundation.layout.padding
+          import androidx.compose.material.icons.Icons
+          import androidx.compose.material.icons.outlined.Analytics
+          import androidx.compose.material.icons.outlined.EventNote
+          import androidx.compose.material.icons.outlined.Home
+          import androidx.compose.material.icons.outlined.Psychology
+          import androidx.compose.material.icons.outlined.ShieldMoon
+          import androidx.compose.material3.Icon
+          import androidx.compose.material3.MaterialTheme
+          import androidx.compose.material3.NavigationBar
+          import androidx.compose.material3.NavigationBarItem
+          import androidx.compose.material3.NavigationBarItemDefaults
+          import androidx.compose.material3.Scaffold
+          import androidx.compose.material3.Text
+          import androidx.compose.runtime.Composable
+          import androidx.compose.runtime.getValue
+          import androidx.compose.runtime.mutableIntStateOf
+          import androidx.compose.runtime.saveable.rememberSaveable
+          import androidx.compose.runtime.setValue
+          import androidx.compose.ui.Modifier
+          import androidx.compose.ui.graphics.vector.ImageVector
+          import androidx.compose.ui.unit.dp
+          import androidx.lifecycle.compose.collectAsStateWithLifecycle
+          import androidx.lifecycle.viewmodel.compose.viewModel
+          import com.sankalp.jee.ui.components.CelebrationConfettiOverlay
+          import com.sankalp.jee.ui.screens.FocusScreen
+          import com.sankalp.jee.ui.screens.HomeScreen
+          import com.sankalp.jee.ui.screens.PlannerScreen
+          import com.sankalp.jee.ui.screens.PracticeScreen
+          import com.sankalp.jee.ui.screens.RevisionScreen
+          import com.sankalp.jee.ui.theme.SankalpTheme
+          import com.sankalp.jee.ui.viewmodel.SankalpViewModel
+
+          enum class SankalpTab(val label: String, val icon: ImageVector) {
+              HOME("Command", Icons.Outlined.Home),
+              FOCUS("Focus", Icons.Outlined.ShieldMoon),
+              PLANNER("Syllabus", Icons.Outlined.EventNote),
+              PRACTICE("Analysis", Icons.Outlined.Analytics),
+              REVISION("Memory", Icons.Outlined.Psychology)
+          }
+
+          class MainActivity : ComponentActivity() {
+              override fun onCreate(savedInstanceState: Bundle?) {
+                  super.onCreate(savedInstanceState)
+                  setContent {
+                      val vm: SankalpViewModel = viewModel()
+                      val prefs by vm.userPrefs.collectAsStateWithLifecycle()
+                      SankalpTheme(darkTheme = prefs.darkTheme) {
+                          SankalpRootApp(viewModel = vm)
+                      }
+                  }
+              }
+          }
+
+          @Composable
+          fun SankalpRootApp(viewModel: SankalpViewModel) {
+              var selectedTabIndex by rememberSaveable { mutableIntStateOf(0) }
+              val timerState by viewModel.timerState.collectAsStateWithLifecycle()
+              val tabs = SankalpTab.entries
+
+              Scaffold(
+                  containerColor = MaterialTheme.colorScheme.background,
+                  bottomBar = {
+                      NavigationBar(containerColor = MaterialTheme.colorScheme.surface, tonalElevation = 0.dp) {
+                          tabs.forEachIndexed { index, tab ->
+                              NavigationBarItem(
+                                  selected = selectedTabIndex == index,
+                                  onClick = { selectedTabIndex = index },
+                                  icon = { Icon(imageVector = tab.icon, contentDescription = tab.label) },
+                                  label = { Text(text = tab.label, style = MaterialTheme.typography.labelSmall) },
+                                  colors = NavigationBarItemDefaults.colors(
+                                      selectedIconColor = MaterialTheme.colorScheme.primary,
+                                      selectedTextColor = MaterialTheme.colorScheme.primary,
+                                      indicatorColor = MaterialTheme.colorScheme.primaryContainer,
+                                      unselectedIconColor = MaterialTheme.colorScheme.onSurfaceVariant,
+                                      unselectedTextColor = MaterialTheme.colorScheme.onSurfaceVariant
+                                  )
+                              )
+                          }
+                      }
+                  }
+              ) { innerPadding ->
+                  Box(modifier = Modifier.fillMaxSize().padding(innerPadding)) {
+                      when (tabs[selectedTabIndex]) {
+                          SankalpTab.HOME -> HomeScreen(
+                              viewModel = viewModel,
+                              onJumpToFocus = { selectedTabIndex = SankalpTab.FOCUS.ordinal },
+                              onJumpToRevision = { selectedTabIndex = SankalpTab.REVISION.ordinal },
+                              onJumpToPractice = { selectedTabIndex = SankalpTab.PRACTICE.ordinal }
+                          )
+                          SankalpTab.FOCUS -> FocusScreen(viewModel = viewModel)
+                          SankalpTab.PLANNER -> PlannerScreen(viewModel = viewModel)
+                          SankalpTab.PRACTICE -> PracticeScreen(viewModel = viewModel)
+                          SankalpTab.REVISION -> RevisionScreen(viewModel = viewModel)
+                      }
+                      CelebrationConfettiOverlay(triggerKey = timerState.celebrationBurstKey)
+                  }
+              }
+          }
+          EOF
+
+          cat << 'EOF' > app/src/main/java/com/sankalp/jee/ui/screens/HomeScreen.kt
+          package com.sankalp.jee.ui.screens
+
+          import androidx.compose.foundation.BorderStroke
+          import androidx.compose.foundation.clickable
+          import androidx.compose.foundation.layout.Arrangement
+          import androidx.compose.foundation.layout.Column
+          import androidx.compose.foundation.layout.Row
+          import androidx.compose.foundation.layout.Spacer
+          import androidx.compose.foundation.layout.fillMaxSize
+          import androidx.compose.foundation.layout.fillMaxWidth
+          import androidx.compose.foundation.layout.height
+          import androidx.compose.foundation.layout.padding
+          import androidx.compose.foundation.layout.size
+          import androidx.compose.foundation.layout.width
+          import androidx.compose.foundation.lazy.LazyColumn
+          import androidx.compose.foundation.shape.RoundedCornerShape
+          import androidx.compose.material.icons.Icons
+          import androidx.compose.material.icons.outlined.Bolt
+          import androidx.compose.material.icons.outlined.CheckCircle
+          import androidx.compose.material.icons.outlined.DarkMode
+          import androidx.compose.material.icons.outlined.EditCalendar
+          import androidx.compose.material.icons.outlined.LightMode
+          import androidx.compose.material.icons.outlined.LocalFireDepartment
+          import androidx.compose.material.icons.outlined.PlayArrow
+          import androidx.compose.material.icons.outlined.Radar
+          import androidx.compose.material.icons.outlined.RadioButtonUnchecked
+          import androidx.compose.material.icons.outlined.Style
+          import androidx.compose.material3.AlertDialog
+          import androidx.compose.material3.Button
+          import androidx.compose.material3.ButtonDefaults
+          import androidx.compose.material3.Icon
+          import androidx.compose.material3.IconButton
+          import androidx.compose.material3.LinearProgressIndicator
+          import androidx.compose.material3.MaterialTheme
+          import androidx.compose.material3.OutlinedTextField
+          import androidx.compose.material3.Surface
+          import androidx.compose.material3.Text
+          import androidx.compose.material3.TextButton
+          import androidx.compose.runtime.Composable
+          import androidx.compose.runtime.getValue
+          import androidx.compose.runtime.mutableStateOf
+          import androidx.compose.runtime.remember
+          import androidx.compose.runtime.setValue
+          import androidx.compose.ui.Alignment
+          import androidx.compose.ui.Modifier
+          import androidx.compose.ui.draw.clip
+          import androidx.compose.ui.hapticfeedback.HapticFeedbackType
+          import androidx.compose.ui.platform.LocalHapticFeedback
+          import androidx.compose.ui.text.font.FontFamily
+          import androidx.compose.ui.text.font.FontWeight
+          import androidx.compose.ui.text.style.TextDecoration
+          import androidx.compose.ui.unit.dp
+          import androidx.compose.ui.unit.sp
+          import androidx.lifecycle.compose.collectAsStateWithLifecycle
+          import com.sankalp.jee.ui.components.AnimatedRingMeter
+          import com.sankalp.jee.ui.components.MetricBadge
+          import com.sankalp.jee.ui.components.SankalpCard
+          import com.sankalp.jee.ui.components.SectionHeader
+          import com.sankalp.jee.ui.components.SubjectPill
+          import com.sankalp.jee.ui.theme.SankalpPalette
+          import com.sankalp.jee.ui.viewmodel.SankalpViewModel
+
+          @Composable
+          fun HomeScreen(
+              viewModel: SankalpViewModel,
+              onJumpToFocus: () -> Unit,
+              onJumpToRevision: () -> Unit,
+              onJumpToPractice: () -> Unit
+          ) {
+              val prefs by viewModel.userPrefs.collectAsStateWithLifecycle()
+              val metrics by viewModel.dashboardMetrics.collectAsStateWithLifecycle()
+              val tasks by viewModel.tasks.collectAsStateWithLifecycle()
+              val timerState by viewModel.timerState.collectAsStateWithLifecycle()
+              val haptics = LocalHapticFeedback.current
+              var showCountdownDialog by remember { mutableStateOf(false) }
+
+              LazyColumn(
+                  modifier = Modifier.fillMaxSize().padding(horizontal = 16.dp),
+                  verticalArrangement = Arrangement.spacedBy(14.dp)
+              ) {
+                  item {
+                      Spacer(modifier = Modifier.height(8.dp))
+                      Row(modifier = Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.SpaceBetween, verticalAlignment = Alignment.CenterVertically) {
+                          Column {
+                              Text(text = "SANKALP // JEE SANCTUARY", style = MaterialTheme.typography.labelSmall, color = SankalpPalette.KesariAmber)
+                              Text(text = "Quiet Discipline. Honest Rank.", style = MaterialTheme.typography.headlineMedium, color = MaterialTheme.colorScheme.onBackground)
+                          }
+                          Row(verticalAlignment = Alignment.CenterVertically) {
+                              Surface(shape = RoundedCornerShape(999.dp), color = MaterialTheme.colorScheme.surfaceVariant, border = BorderStroke(1.dp, MaterialTheme.colorScheme.outline)) {
+                                  Row(modifier = Modifier.padding(horizontal = 10.dp, vertical = 6.dp), verticalAlignment = Alignment.CenterVertically) {
+                                      Icon(imageVector = Icons.Outlined.LocalFireDepartment, contentDescription = "Streak", tint = SankalpPalette.KesariAmber, modifier = Modifier.size(16.dp))
+                                      Spacer(modifier = Modifier.width(4.dp))
+                                      Text(text = prefs.currentStreakDays.toString() + "d", fontFamily = FontFamily.Monospace, fontWeight = FontWeight.Bold, fontSize = 13.sp)
+                                  }
+                              }
+                              IconButton(onClick = { viewModel.toggleDarkTheme(!prefs.darkTheme) }) {
+                                  Icon(imageVector = if (prefs.darkTheme) Icons.Outlined.LightMode else Icons.Outlined.DarkMode, contentDescription = "Toggle Theme")
+                              }
+                          }
+                      }
+                  }
+
+                  item {
+                      SankalpCard(borderColor = SankalpPalette.KesariAmber.copy(alpha = 0.5f)) {
+                          Row(modifier = Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.SpaceBetween, verticalAlignment = Alignment.CenterVertically) {
+                              Column(modifier = Modifier.weight(1f)) {
+                                  Row(verticalAlignment = Alignment.CenterVertically, modifier = Modifier.clickable { showCountdownDialog = true }) {
+                                      Text(text = prefs.examTargetName.uppercase(), style = MaterialTheme.typography.labelSmall, color = SankalpPalette.KesariAmber)
+                                      Spacer(modifier = Modifier.width(6.dp))
+                                      Icon(imageVector = Icons.Outlined.EditCalendar, contentDescription = "Edit", modifier = Modifier.size(14.dp))
+                                  }
+                                  Spacer(modifier = Modifier.height(4.dp))
+                                  Row(verticalAlignment = Alignment.Bottom) {
+                                      Text(text = metrics.daysToExam.toString(), fontFamily = FontFamily.Monospace, fontWeight = FontWeight.Bold, fontSize = 44.sp)
+                                      Spacer(modifier = Modifier.width(8.dp))
+                                      Text(text = "DAYS LEFT", style = MaterialTheme.typography.labelSmall, modifier = Modifier.padding(bottom = 8.dp))
+                                  }
+                                  Spacer(modifier = Modifier.height(6.dp))
+                                  Text(text = "Today: " + metrics.todayFocusMinutes.toString() + "m | Week: " + metrics.weekFocusMinutes.toString() + "m", style = MaterialTheme.typography.bodyMedium, color = MaterialTheme.colorScheme.onSurfaceVariant)
+                              }
+
+                              AnimatedRingMeter(progress = metrics.focusScoreToday / 100f, size = 96.dp, strokeWidth = 9.dp, activeColor = SankalpPalette.KesariAmber) {
+                                  Column(horizontalAlignment = Alignment.CenterHorizontally) {
+                                      Text(text = metrics.focusScoreToday.toString(), fontFamily = FontFamily.Monospace, fontWeight = FontWeight.Bold, fontSize = 22.sp)
+                                      Text(text = "SCORE", style = MaterialTheme.typography.labelSmall, fontSize = 9.sp)
+                                  }
+                              }
+                          }
+
+                          Spacer(modifier = Modifier.height(14.dp))
+                          LinearProgressIndicator(progress = { metrics.xpProgressInLevel }, modifier = Modifier.fillMaxWidth().height(6.dp).clip(RoundedCornerShape(999.dp)), color = SankalpPalette.IndigoPulse)
+                          Spacer(modifier = Modifier.height(14.dp))
+
+                          Button(
+                              onClick = {
+                                  haptics.performHapticFeedback(HapticFeedbackType.LongPress)
+                                  if (!timerState.isRunning) viewModel.startFocusSession()
+                                  onJumpToFocus()
+                              },
+                              modifier = Modifier.fillMaxWidth().height(52.dp),
+                              shape = RoundedCornerShape(999.dp),
+                              colors = ButtonDefaults.buttonColors(containerColor = SankalpPalette.KesariAmber, contentColor = MaterialTheme.colorScheme.onPrimary)
+                          ) {
+                              Icon(imageVector = Icons.Outlined.PlayArrow, contentDescription = null)
+                              Spacer(modifier = Modifier.width(8.dp))
+                              Text(text = if (timerState.isRunning) "RETURN TO ACTIVE FOCUS SESSION" else ("START DEEP FOCUS (" + timerState.targetMinutes.toString() + " MIN)"), fontWeight = FontWeight.Bold)
+                          }
+                      }
+                  }
+
+                  item {
+                      Row(modifier = Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.spacedBy(10.dp)) {
+                          MetricBadge(label = "Syllabus Revised", value = metrics.syllabusCompletionPercent.toString() + "%", accentColor = SankalpPalette.PrussianTeal, modifier = Modifier.weight(1f))
+                          MetricBadge(label = "Due SM-2 Cards", value = metrics.dueFlashcardsCount.toString(), accentColor = SankalpPalette.KesariAmber, modifier = Modifier.weight(1f).clickable { onJumpToRevision() })
+                          MetricBadge(label = "Backlog Items", value = metrics.backlogCount.toString(), accentColor = if (metrics.backlogCount > 0) SankalpPalette.MathsCoral else SankalpPalette.SuccessGreen, modifier = Modifier.weight(1f))
+                      }
+                  }
+
+                  item {
+                      SectionHeader(title = "Today's Execution Plan", subtitle = "Tap to check off completed blocks", icon = Icons.Outlined.Bolt, accent = SankalpPalette.KesariAmber)
+                      SankalpCard {
+                          tasks.take(4).forEach { task ->
+                              Row(
+                                  modifier = Modifier.fillMaxWidth().clickable { viewModel.toggleTaskCompleted(task) }.padding(vertical = 8.dp),
+                                  verticalAlignment = Alignment.CenterVertically
+                              ) {
+                                  Icon(imageVector = if (task.isCompleted) Icons.Outlined.CheckCircle else Icons.Outlined.RadioButtonUnchecked, contentDescription = null, tint = if (task.isCompleted) SankalpPalette.SuccessGreen else MaterialTheme.colorScheme.onSurfaceVariant)
+                                  Spacer(modifier = Modifier.width(10.dp))
+                                  Column(modifier = Modifier.weight(1f)) {
+                                      Text(text = task.title, style = MaterialTheme.typography.bodyMedium, textDecoration = if (task.isCompleted) TextDecoration.LineThrough else TextDecoration.None)
+                                      Text(text = task.estimatedMinutes.toString() + " min", style = MaterialTheme.typography.labelSmall, color = MaterialTheme.colorScheme.onSurfaceVariant)
+                                  }
+                                  SubjectPill(subject = task.subject)
+                              }
+                          }
+                      }
+                  }
+
+                  item {
+                      val topWeakness = metrics.weaknessRadarTop5.firstOrNull()
+                      if (topWeakness != null) {
+                          SectionHeader(title = "Weakness Radar #1 Target", subtitle = "Highest-priority chapter to fix next", icon = Icons.Outlined.Radar, accent = SankalpPalette.MathsCoral)
+                          SankalpCard(modifier = Modifier.clickable { onJumpToPractice() }, borderColor = SankalpPalette.MathsCoral.copy(alpha = 0.45f)) {
+                              SubjectPill(subject = topWeakness.chapter.subject)
+                              Spacer(modifier = Modifier.height(6.dp))
+                              Text(text = topWeakness.chapter.chapterName, style = MaterialTheme.typography.titleMedium)
+                              Text(text = topWeakness.reason, style = MaterialTheme.typography.bodyMedium, color = MaterialTheme.colorScheme.onSurfaceVariant)
+                          }
+                      }
+                  }
+
+                  item {
+                      SankalpCard(modifier = Modifier.clickable { onJumpToRevision() }, borderColor = SankalpPalette.PrussianTeal.copy(alpha = 0.45f)) {
+                          Row(verticalAlignment = Alignment.CenterVertically) {
+                              Icon(imageVector = Icons.Outlined.Style, contentDescription = null, tint = SankalpPalette.PrussianTeal, modifier = Modifier.size(26.dp))
+                              Spacer(modifier = Modifier.width(12.dp))
+                              Column {
+                                  Text(text = metrics.dueFlashcardsCount.toString() + " SM-2 Cards Due Today", style = MaterialTheme.typography.titleMedium)
+                                  Text(text = "Tap to review formulas and active recall cards", style = MaterialTheme.typography.bodyMedium, color = MaterialTheme.colorScheme.onSurfaceVariant)
+                              }
+                          }
+                      }
+                      Spacer(modifier = Modifier.height(20.dp))
+                  }
+              }
+
+              if (showCountdownDialog) {
+                  var examNameInput by remember { mutableStateOf(prefs.examTargetName) }
+                  var daysLeftInput by remember { mutableStateOf(metrics.daysToExam.toString()) }
+                  AlertDialog(
+                      onDismissRequest = { showCountdownDialog = false },
+                      title = { Text("Configure Exam Countdown") },
+                      text = {
+                          Column(verticalArrangement = Arrangement.spacedBy(10.dp)) {
+                              OutlinedTextField(value = examNameInput, onValueChange = { examNameInput = it }, label = { Text("Target Exam Name") }, singleLine = true)
+                              OutlinedTextField(value = daysLeftInput, onValueChange = { daysLeftInput = it.filter { ch -> ch.isDigit() } }, label = { Text("Days Remaining") }, singleLine = true)
+                          }
+                      },
+                      confirmButton = {
+                          Button(onClick = {
+                              viewModel.updateExamCountdown(examNameInput, daysLeftInput.toLongOrNull() ?: 90L)
+                              showCountdownDialog = false
+                          }) { Text("Save") }
+                      },
+                      dismissButton = { TextButton(onClick = { showCountdownDialog = false }) { Text("Cancel") } }
+                  )
+              }
+          }
+          EOF
+
+          cat << 'EOF' > app/src/main/java/com/sankalp/jee/ui/screens/FocusScreen.kt
+          package com.sankalp.jee.ui.screens
+
+          import android.content.Intent
+          import android.provider.Settings
+          import androidx.compose.foundation.BorderStroke
+          import androidx.compose.foundation.layout.Arrangement
+          import androidx.compose.foundation.layout.Column
+          import androidx.compose.foundation.layout.ExperimentalLayoutApi
+          import androidx.compose.foundation.layout.FlowRow
+          import androidx.compose.foundation.layout.Row
+          import androidx.compose.foundation.layout.Spacer
+          import androidx.compose.foundation.layout.fillMaxSize
+          import androidx.compose.foundation.layout.fillMaxWidth
+          import androidx.compose.foundation.layout.height
+          import androidx.compose.foundation.layout.padding
+          import androidx.compose.foundation.layout.width
+          import androidx.compose.foundation.lazy.LazyColumn
+          import androidx.compose.foundation.shape.RoundedCornerShape
+          import androidx.compose.material.icons.Icons
+          import androidx.compose.material.icons.outlined.Block
+          import androidx.compose.material.icons.outlined.Lock
+          import androidx.compose.material.icons.outlined.PlayArrow
+          import androidx.compose.material.icons.outlined.Security
+          import androidx.compose.material.icons.outlined.Stop
+          import androidx.compose.material.icons.outlined.Timer
+          import androidx.compose.material3.AlertDialog
+          import androidx.compose.material3.Button
+          import androidx.compose.material3.ButtonDefaults
+          import androidx.compose.material3.FilterChip
+          import androidx.compose.material3.Icon
+          import androidx.compose.material3.MaterialTheme
+          import androidx.compose.material3.OutlinedButton
+          import androidx.compose.material3.OutlinedTextField
+          import androidx.compose.material3.Switch
+          import androidx.compose.material3.Text
+          import androidx.compose.material3.TextButton
+          import androidx.compose.runtime.Composable
+          import androidx.compose.runtime.LaunchedEffect
+          import androidx.compose.runtime.getValue
+          import androidx.compose.runtime.mutableIntStateOf
+          import androidx.compose.runtime.mutableStateOf
+          import androidx.compose.runtime.remember
+          import androidx.compose.runtime.setValue
+          import androidx.compose.ui.Alignment
+          import androidx.compose.ui.Modifier
+          import androidx.compose.ui.platform.LocalContext
+          import androidx.compose.ui.text.font.FontFamily
+          import androidx.compose.ui.text.font.FontWeight
+          import androidx.compose.ui.unit.dp
+          import androidx.compose.ui.unit.sp
+          import androidx.lifecycle.compose.collectAsStateWithLifecycle
+          import com.sankalp.jee.data.local.FocusMode
+          import com.sankalp.jee.data.local.Subject
+          import com.sankalp.jee.service.ScreenTimeHelper
+          import com.sankalp.jee.ui.components.AnimatedRingMeter
+          import com.sankalp.jee.ui.components.SankalpCard
+          import com.sankalp.jee.ui.components.SectionHeader
+          import com.sankalp.jee.ui.theme.SankalpPalette
+          import com.sankalp.jee.ui.viewmodel.SankalpViewModel
+          import kotlinx.coroutines.delay
+          import java.util.Locale
+
+          private val DISTRACTING_APPS = listOf(
+              "Instagram" to "com.instagram.android",
+              "YouTube" to "com.google.android.youtube",
+              "Snapchat" to "com.snapchat.android",
+              "Reddit" to "com.reddit.frontpage",
+              "X / Twitter" to "com.twitter.android",
+              "BGMI / PUBG" to "com.pubg.imobile"
+          )
+
+          @OptIn(ExperimentalLayoutApi::class)
+          @Composable
+          fun FocusScreen(viewModel: SankalpViewModel) {
+              val context = LocalContext.current
+              val prefs by viewModel.userPrefs.collectAsStateWithLifecycle()
+              val timerState by viewModel.timerState.collectAsStateWithLifecycle()
+              var showStrictExitModal by remember { mutableStateOf(false) }
+              val accessibilityActive = remember(timerState.elapsedSeconds) { ScreenTimeHelper.isAccessibilityServiceEnabled(context) }
+
+              LazyColumn(
+                  modifier = Modifier.fillMaxSize().padding(horizontal = 16.dp),
+                  verticalArrangement = Arrangement.spacedBy(14.dp)
+              ) {
+                  item {
+                      Spacer(modifier = Modifier.height(8.dp))
+                      SectionHeader(title = "Focus Sanctuary and Anti-Distraction", subtitle = "Pomodoro, 3-Hr JEE Stamina and Reels Shield", icon = Icons.Outlined.Timer)
+                  }
+
+                  item {
+                      SankalpCard {
+                          Row(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
+                              FocusMode.entries.forEach { mode ->
+                                  FilterChip(
+                                      selected = timerState.mode == mode,
+                                      onClick = { viewModel.configureTimer(mode, if (mode == FocusMode.POMODORO) 50 else 180, timerState.selectedSubject) },
+                                      enabled = !timerState.isRunning,
+                                      label = { Text(mode.label, fontSize = 12.sp) }
+                                  )
+                              }
+                          }
+                          if (timerState.mode != FocusMode.STOPWATCH && !timerState.isRunning) {
+                              Row(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
+                                  listOf(25, 50, 90, 180).forEach { mins ->
+                                      FilterChip(selected = timerState.targetMinutes == mins, onClick = { viewModel.configureTimer(timerState.mode, mins, timerState.selectedSubject) }, label = { Text(mins.toString() + "m") })
+                                  }
+                              }
+                          }
+                          if (!timerState.isRunning) {
+                              Row(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
+                                  Subject.entries.forEach { subj ->
+                                      FilterChip(selected = timerState.selectedSubject == subj, onClick = { viewModel.configureTimer(timerState.mode, timerState.targetMinutes, subj) }, label = { Text(subj.displayName, fontSize = 12.sp) })
+                                  }
+                              }
+                          }
+
+                          Spacer(modifier = Modifier.height(16.dp))
+                          val totalSecs = (timerState.targetMinutes * 60).coerceAtLeast(1)
+                          val progress = if (timerState.mode == FocusMode.STOPWATCH) ((timerState.elapsedSeconds % 3600) / 3600f) else timerState.remainingSeconds.toFloat() / totalSecs.toFloat()
+
+                          Column(modifier = Modifier.fillMaxWidth(), horizontalAlignment = Alignment.CenterHorizontally) {
+                              AnimatedRingMeter(progress = progress, size = 210.dp, strokeWidth = 12.dp, activeColor = SankalpPalette.subjectColor(timerState.selectedSubject)) {
+                                  Column(horizontalAlignment = Alignment.CenterHorizontally) {
+                                      val displaySecs = if (timerState.mode == FocusMode.STOPWATCH) timerState.elapsedSeconds else timerState.remainingSeconds
+                                      Text(text = String.format(Locale.US, "%02d:%02d", displaySecs / 60, displaySecs % 60), style = MaterialTheme.typography.displayLarge)
+                                      Text(text = timerState.selectedSubject.displayName, style = MaterialTheme.typography.labelSmall, color = SankalpPalette.subjectColor(timerState.selectedSubject))
+                                  }
+                              }
+                          }
+
+                          Spacer(modifier = Modifier.height(16.dp))
+                          if (!timerState.isRunning) {
+                              Button(
+                                  onClick = { viewModel.startFocusSession() },
+                                  modifier = Modifier.fillMaxWidth().height(52.dp),
+                                  shape = RoundedCornerShape(999.dp),
+                                  colors = ButtonDefaults.buttonColors(containerColor = SankalpPalette.KesariAmber)
+                              ) {
+                                  Icon(Icons.Outlined.PlayArrow, contentDescription = null)
+                                  Spacer(modifier = Modifier.width(8.dp))
+                                  Text("BEGIN FOCUS BLOCK", fontWeight = FontWeight.Bold)
+                              }
+                          } else {
+                              Button(
+                                  onClick = {
+                                      if (timerState.mode == FocusMode.STOPWATCH) viewModel.stopOrForfeitFocusSession(true)
+                                      else if (prefs.strictModeEnabled) showStrictExitModal = true
+                                      else viewModel.stopOrForfeitFocusSession(false)
+                                  },
+                                  modifier = Modifier.fillMaxWidth().height(52.dp),
+                                  shape = RoundedCornerShape(999.dp),
+                                  colors = ButtonDefaults.buttonColors(containerColor = SankalpPalette.DangerCrimson)
+                              ) {
+                                  Icon(if (prefs.strictModeEnabled) Icons.Outlined.Lock else Icons.Outlined.Stop, contentDescription = null)
+                                  Spacer(modifier = Modifier.width(8.dp))
+                                  Text(if (prefs.strictModeEnabled) "STRICT MODE LOCKED (TAP FOR COOLDOWN)" else "STOP SESSION", fontWeight = FontWeight.Bold)
+                              }
+                          }
+                      }
+                  }
+
+                  item {
+                      SectionHeader(title = "Anti-Distraction Shield", subtitle = "Accessibility Guardian Settings", icon = Icons.Outlined.Security, accent = SankalpPalette.PrussianTeal)
+                      SankalpCard {
+                          if (!accessibilityActive) {
+                              OutlinedButton(
+                                  onClick = { context.startActivity(Intent(Settings.ACTION_ACCESSIBILITY_SETTINGS)) },
+                                  modifier = Modifier.fillMaxWidth(),
+                                  border = BorderStroke(1.dp, SankalpPalette.KesariAmber)
+                              ) {
+                                  Text("ENABLE ACCESSIBILITY SHIELD IN ANDROID SETTINGS", color = SankalpPalette.KesariAmber, fontWeight = FontWeight.Bold, fontSize = 12.sp)
+                              }
+                          }
+                          Row(modifier = Modifier.fillMaxWidth().padding(vertical = 6.dp), horizontalArrangement = Arrangement.SpaceBetween, verticalAlignment = Alignment.CenterVertically) {
+                              Text("Strict Mode (Impulse Quitting Lock)", modifier = Modifier.weight(1f))
+                              Switch(checked = prefs.strictModeEnabled, onCheckedChange = { viewModel.toggleStrictMode(it) })
+                          }
+                          Row(modifier = Modifier.fillMaxWidth().padding(vertical = 6.dp), horizontalArrangement = Arrangement.SpaceBetween, verticalAlignment = Alignment.CenterVertically) {
+                              Text("Reels and Shorts 1-Video Loop Breaker", modifier = Modifier.weight(1f))
+                              Switch(checked = prefs.reelsLoopBreakerEnabled, onCheckedChange = { viewModel.toggleReelsShield(it) })
+                          }
+                          Row(modifier = Modifier.fillMaxWidth().padding(vertical = 6.dp), horizontalArrangement = Arrangement.SpaceBetween, verticalAlignment = Alignment.CenterVertically) {
+                              Text("Auto Study/Sleep Schedule Blocking", modifier = Modifier.weight(1f))
+                              Switch(checked = prefs.scheduleEnabled, onCheckedChange = { viewModel.toggleScheduleEnabled(it) })
+                          }
+                      }
+                  }
+
+                  item {
+                      SectionHeader(title = "Blocked Distracting Apps", icon = Icons.Outlined.Block, accent = SankalpPalette.MathsCoral)
+                      SankalpCard {
+                          FlowRow(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
+                              DISTRACTING_APPS.forEach { (label, pkg) ->
+                                  val isBlocked = prefs.blockedPackages.contains(pkg)
+                                  FilterChip(selected = isBlocked, onClick = { viewModel.toggleBlockedPackage(pkg) }, label = { Text(if (isBlocked) ("Blocked: " + label) else label) })
+                              }
+                          }
+                      }
+                      Spacer(modifier = Modifier.height(20.dp))
+                  }
+              }
+
+              if (showStrictExitModal) {
+                  var cooldownSeconds by remember { mutableIntStateOf(12) }
+                  var pledgeInput by remember { mutableStateOf("") }
+                  LaunchedEffect(Unit) {
+                      while (cooldownSeconds > 0) {
+                          delay(1_000L)
+                          cooldownSeconds--
+                      }
+                  }
+                  AlertDialog(
+                      onDismissRequest = { showStrictExitModal = false },
+                      title = { Text("Strict Mode Cooldown") },
+                      text = {
+                          Column(verticalArrangement = Arrangement.spacedBy(8.dp)) {
+                              Text("Impulse urges pass in 12 seconds. Stay with your JEE goal.")
+                              if (cooldownSeconds > 0) {
+                                  Text("Cooldown remaining: " + cooldownSeconds.toString() + "s", fontFamily = FontFamily.Monospace, fontWeight = FontWeight.Bold, color = SankalpPalette.KesariAmber)
+                              } else {
+                                  OutlinedTextField(value = pledgeInput, onValueChange = { pledgeInput = it }, label = { Text("Type 'quit focus' to exit") }, singleLine = true)
+                              }
+                          }
+                      },
+                      confirmButton = { Button(onClick = { showStrictExitModal = false }) { Text("Stay Focused") } },
+                      dismissButton = {
+                          TextButton(
+                              enabled = cooldownSeconds == 0 && pledgeInput.trim().lowercase() == "quit focus",
+                              onClick = {
+                                  viewModel.stopOrForfeitFocusSession(false)
+                                  showStrictExitModal = false
+                              }
+                          ) { Text("Forfeit", color = SankalpPalette.DangerCrimson) }
+                      }
+                  )
+              }
+          }
+          EOF
+
+          cat << 'EOF' > app/src/main/java/com/sankalp/jee/ui/screens/PlannerScreen.kt
+          package com.sankalp.jee.ui.screens
+
+          import androidx.compose.foundation.layout.Arrangement
+          import androidx.compose.foundation.layout.Column
+          import androidx.compose.foundation.layout.ExperimentalLayoutApi
+          import androidx.compose.foundation.layout.FlowRow
+          import androidx.compose.foundation.layout.Row
+          import androidx.compose.foundation.layout.Spacer
+          import androidx.compose.foundation.layout.fillMaxSize
+          import androidx.compose.foundation.layout.fillMaxWidth
+          import androidx.compose.foundation.layout.height
+          import androidx.compose.foundation.layout.padding
+          import androidx.compose.foundation.layout.width
+          import androidx.compose.foundation.lazy.LazyColumn
+          import androidx.compose.foundation.lazy.items
+          import androidx.compose.foundation.shape.RoundedCornerShape
+          import androidx.compose.material.icons.Icons
+          import androidx.compose.material.icons.outlined.Add
+          import androidx.compose.material.icons.outlined.CheckCircle
+          import androidx.compose.material.icons.outlined.DeleteOutline
+          import androidx.compose.material.icons.outlined.RadioButtonUnchecked
+          import androidx.compose.material3.AlertDialog
+          import androidx.compose.material3.Button
+          import androidx.compose.material3.FilterChip
+          import androidx.compose.material3.Icon
+          import androidx.compose.material3.IconButton
+          import androidx.compose.material3.MaterialTheme
+          import androidx.compose.material3.OutlinedTextField
+          import androidx.compose.material3.Tab
+          import androidx.compose.material3.TabRow
+          import androidx.compose.material3.Text
+          import androidx.compose.material3.TextButton
+          import androidx.compose.runtime.Composable
+          import androidx.compose.runtime.getValue
+          import androidx.compose.runtime.mutableIntStateOf
+          import androidx.compose.runtime.mutableStateOf
+          import androidx.compose.runtime.remember
+          import androidx.compose.runtime.saveable.rememberSaveable
+          import androidx.compose.runtime.setValue
+          import androidx.compose.ui.Alignment
+          import androidx.compose.ui.Modifier
+          import androidx.compose.ui.text.font.FontFamily
+          import androidx.compose.ui.text.font.FontWeight
+          import androidx.compose.ui.unit.dp
+          import androidx.compose.ui.unit.sp
+          import androidx.lifecycle.compose.collectAsStateWithLifecycle
+          import com.sankalp.jee.data.local.Subject
+          import com.sankalp.jee.data.local.TopicStatus
+          import com.sankalp.jee.ui.components.SankalpCard
+          import com.sankalp.jee.ui.components.SubjectPill
+          import com.sankalp.jee.ui.theme.SankalpPalette
+          import com.sankalp.jee.ui.viewmodel.SankalpViewModel
+
+          @OptIn(ExperimentalLayoutApi::class)
+          @Composable
+          fun PlannerScreen(viewModel: SankalpViewModel) {
+              val chapters by viewModel.chapters.collectAsStateWithLifecycle()
+              val tasks by viewModel.tasks.collectAsStateWithLifecycle()
+              var subTabIndex by rememberSaveable { mutableIntStateOf(0) }
+              var selectedSubject by rememberSaveable { mutableStateOf(Subject.PHYSICS) }
+              var showAddTaskModal by remember { mutableStateOf(false) }
+
+              Column(modifier = Modifier.fillMaxSize()) {
+                  TabRow(selectedTabIndex = subTabIndex, containerColor = MaterialTheme.colorScheme.surface) {
+                      listOf("JEE Syllabus", "Daily Planner", "Backlog Queue").forEachIndexed { idx, title ->
+                          Tab(selected = subTabIndex == idx, onClick = { subTabIndex = idx }, text = { Text(title, fontSize = 13.sp, fontWeight = FontWeight.SemiBold) })
+                      }
+                  }
+
+                  when (subTabIndex) {
+                      0 -> {
+                          val filteredChapters = chapters.filter { it.subject == selectedSubject }
+                          LazyColumn(modifier = Modifier.fillMaxSize().padding(horizontal = 16.dp), verticalArrangement = Arrangement.spacedBy(12.dp)) {
+                              item {
+                                  Spacer(modifier = Modifier.height(8.dp))
+                                  Row(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
+                                      Subject.entries.forEach { subj ->
+                                          FilterChip(selected = selectedSubject == subj, onClick = { selectedSubject = subj }, label = { Text(subj.displayName) })
+                                      }
+                                  }
+                              }
+                              items(filteredChapters, key = { it.id }) { chapter ->
+                                  val allTopics = chapter.topicsCsv.split(",").map { it.trim() }.filter { it.isNotEmpty() }
+                                  val doneTopics = chapter.completedTopicsCsv.split(",").map { it.trim() }.filter { it.isNotEmpty() }.toSet()
+                                  SankalpCard {
+                                      Row(modifier = Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.SpaceBetween) {
+                                          Text("CLASS " + chapter.classLevel.toString() + " | " + chapter.weightage.label.uppercase(), style = MaterialTheme.typography.labelSmall, color = SankalpPalette.subjectColor(chapter.subject))
+                                          Text(chapter.status.label.uppercase(), style = MaterialTheme.typography.labelSmall, color = SankalpPalette.PrussianTeal)
+                                      }
+                                      Spacer(modifier = Modifier.height(6.dp))
+                                      Text(chapter.chapterName, style = MaterialTheme.typography.titleMedium)
+                                      Text("Confidence: " + chapter.confidence.toString() + "/5 | PYQs: " + chapter.solvedPyqs.toString() + "/" + chapter.totalPyqs.toString(), fontFamily = FontFamily.Monospace, fontSize = 12.sp, color = MaterialTheme.colorScheme.onSurfaceVariant)
+                                      Spacer(modifier = Modifier.height(8.dp))
+                                      FlowRow(horizontalArrangement = Arrangement.spacedBy(6.dp)) {
+                                          allTopics.forEach { topic ->
+                                              val isDone = doneTopics.contains(topic)
+                                              FilterChip(
+                                                  selected = isDone,
+                                                  onClick = {
+                                                      val updatedSet = doneTopics.toMutableSet()
+                                                      if (isDone) updatedSet.remove(topic) else updatedSet.add(topic)
+                                                      val newStatus = if (updatedSet.size == allTopics.size) TopicStatus.MASTERED else TopicStatus.LEARNING
+                                                      viewModel.updateChapterMastery(chapter, newStatus, chapter.confidence, chapter.solvedPyqs + 2, chapter.isBacklog, updatedSet.joinToString(","))
+                                                  },
+                                                  label = { Text(topic, fontSize = 11.sp) }
+                                              )
+                                          }
+                                      }
+                                  }
+                              }
+                              item { Spacer(modifier = Modifier.height(20.dp)) }
+                          }
+                      }
+                      1 -> {
+                          LazyColumn(modifier = Modifier.fillMaxSize().padding(horizontal = 16.dp), verticalArrangement = Arrangement.spacedBy(12.dp)) {
+                              item {
+                                  Spacer(modifier = Modifier.height(8.dp))
+                                  Button(onClick = { showAddTaskModal = true }, modifier = Modifier.fillMaxWidth(), shape = RoundedCornerShape(999.dp)) {
+                                      Icon(Icons.Outlined.Add, contentDescription = null)
+                                      Spacer(modifier = Modifier.width(8.dp))
+                                      Text("ADD STUDY TARGET BLOCK", fontWeight = FontWeight.Bold)
+                                  }
+                              }
+                              items(tasks, key = { it.id }) { task ->
+                                  SankalpCard {
+                                      Row(modifier = Modifier.fillMaxWidth(), verticalAlignment = Alignment.CenterVertically) {
+                                          IconButton(onClick = { viewModel.toggleTaskCompleted(task) }) {
+                                              Icon(if (task.isCompleted) Icons.Outlined.CheckCircle else Icons.Outlined.RadioButtonUnchecked, contentDescription = null, tint = if (task.isCompleted) SankalpPalette.SuccessGreen else MaterialTheme.colorScheme.onSurfaceVariant)
+                                          }
+                                          Column(modifier = Modifier.weight(1f)) {
+                                              Text(task.title, style = MaterialTheme.typography.titleMedium)
+                                              SubjectPill(subject = task.subject)
+                                          }
+                                          IconButton(onClick = { viewModel.deleteTask(task) }) {
+                                              Icon(Icons.Outlined.DeleteOutline, contentDescription = "Delete")
+                                          }
+                                      }
+                                  }
+                              }
+                          }
+                      }
+                      2 -> {
+                          val backlogChapters = chapters.filter { it.isBacklog }
+                          LazyColumn(modifier = Modifier.fillMaxSize().padding(horizontal = 16.dp), verticalArrangement = Arrangement.spacedBy(12.dp)) {
+                              item { Spacer(modifier = Modifier.height(8.dp)) }
+                              items(backlogChapters, key = { it.id }) { chap ->
+                                  SankalpCard {
+                                      Row(modifier = Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.SpaceBetween, verticalAlignment = Alignment.CenterVertically) {
+                                          Column(modifier = Modifier.weight(1f)) {
+                                              SubjectPill(subject = chap.subject)
+                                              Text(chap.chapterName, style = MaterialTheme.typography.titleMedium)
+                                          }
+                                          TextButton(onClick = { viewModel.updateChapterMastery(chap, TopicStatus.REVISED, 4, chap.solvedPyqs, false) }) {
+                                              Text("CLEAR BACKLOG", color = SankalpPalette.SuccessGreen, fontWeight = FontWeight.Bold)
+                                          }
+                                      }
+                                  }
+                              }
+                          }
+                      }
+                  }
+              }
+
+              if (showAddTaskModal) {
+                  var title by remember { mutableStateOf("") }
+                  var subject by remember { mutableStateOf(Subject.PHYSICS) }
+                  var mins by remember { mutableStateOf("60") }
+                  AlertDialog(
+                      onDismissRequest = { showAddTaskModal = false },
+                      title = { Text("Add Study Block") },
+                      text = {
+                          Column(verticalArrangement = Arrangement.spacedBy(8.dp)) {
+                              OutlinedTextField(value = title, onValueChange = { title = it }, label = { Text("Task Title") })
+                              Row(horizontalArrangement = Arrangement.spacedBy(6.dp)) {
+                                  Subject.entries.forEach { s -> FilterChip(selected = subject == s, onClick = { subject = s }, label = { Text(s.shortCode) }) }
+                              }
+                              OutlinedTextField(value = mins, onValueChange = { mins = it.filter { c -> c.isDigit() } }, label = { Text("Estimated Minutes") }, singleLine = true)
+                          }
+                      },
+                      confirmButton = {
+                          Button(onClick = {
+                              viewModel.addStudyTask(title, subject, mins.toIntOrNull() ?: 60, false)
+                              showAddTaskModal = false
+                          }) { Text("Add") }
+                      },
+                      dismissButton = { TextButton(onClick = { showAddTaskModal = false }) { Text("Cancel") } }
+                  )
+              }
+          }
+          EOF
+
+          cat << 'EOF' > app/src/main/java/com/sankalp/jee/ui/screens/PracticeScreen.kt
+          package com.sankalp.jee.ui.screens
+
+          import androidx.compose.foundation.Canvas
+          import androidx.compose.foundation.layout.Arrangement
+          import androidx.compose.foundation.layout.Column
+          import androidx.compose.foundation.layout.Row
+          import androidx.compose.foundation.layout.Spacer
+          import androidx.compose.foundation.layout.fillMaxSize
+          import androidx.compose.foundation.layout.fillMaxWidth
+          import androidx.compose.foundation.layout.height
+          import androidx.compose.foundation.layout.padding
+          import androidx.compose.foundation.layout.width
+          import androidx.compose.foundation.lazy.LazyColumn
+          import androidx.compose.foundation.lazy.items
+          import androidx.compose.foundation.shape.RoundedCornerShape
+          import androidx.compose.material.icons.Icons
+          import androidx.compose.material.icons.outlined.Add
+          import androidx.compose.material.icons.outlined.BugReport
+          import androidx.compose.material3.AlertDialog
+          import androidx.compose.material3.Button
+          import androidx.compose.material3.Icon
+          import androidx.compose.material3.MaterialTheme
+          import androidx.compose.material3.OutlinedTextField
+          import androidx.compose.material3.Tab
+          import androidx.compose.material3.TabRow
+          import androidx.compose.material3.Text
+          import androidx.compose.material3.TextButton
+          import androidx.compose.runtime.Composable
+          import androidx.compose.runtime.getValue
+          import androidx.compose.runtime.mutableIntStateOf
+          import androidx.compose.runtime.mutableStateOf
+          import androidx.compose.runtime.remember
+          import androidx.compose.runtime.saveable.rememberSaveable
+          import androidx.compose.runtime.setValue
+          import androidx.compose.ui.Modifier
+          import androidx.compose.ui.geometry.Offset
+          import androidx.compose.ui.graphics.Path
+          import androidx.compose.ui.graphics.StrokeCap
+          import androidx.compose.ui.graphics.drawscope.Stroke
+          import androidx.compose.ui.text.font.FontFamily
+          import androidx.compose.ui.text.font.FontWeight
+          import androidx.compose.ui.unit.dp
+          import androidx.compose.ui.unit.sp
+          import androidx.lifecycle.compose.collectAsStateWithLifecycle
+          import com.sankalp.jee.data.local.ErrorCategory
+          import com.sankalp.jee.data.local.Subject
+          import com.sankalp.jee.ui.components.SankalpCard
+          import com.sankalp.jee.ui.components.SubjectPill
+          import com.sankalp.jee.ui.theme.SankalpPalette
+          import com.sankalp.jee.ui.viewmodel.SankalpViewModel
+
+          @Composable
+          fun PracticeScreen(viewModel: SankalpViewModel) {
+              val mocks by viewModel.mockTests.collectAsStateWithLifecycle()
+              val errors by viewModel.errorLogs.collectAsStateWithLifecycle()
+              val metrics by viewModel.dashboardMetrics.collectAsStateWithLifecycle()
+              var subTab by rememberSaveable { mutableIntStateOf(0) }
+              var showAddMockModal by remember { mutableStateOf(false) }
+              var showAddErrorModal by remember { mutableStateOf(false) }
+
+              Column(modifier = Modifier.fillMaxSize()) {
+                  TabRow(selectedTabIndex = subTab, containerColor = MaterialTheme.colorScheme.surface) {
+                      listOf("Weakness Radar", "Mock Analytics", "Error Book").forEachIndexed { i, title ->
+                          Tab(selected = subTab == i, onClick = { subTab = i }, text = { Text(title, fontSize = 13.sp, fontWeight = FontWeight.SemiBold) })
+                      }
+                  }
+
+                  when (subTab) {
+                      0 -> {
+                          LazyColumn(modifier = Modifier.fillMaxSize().padding(horizontal = 16.dp), verticalArrangement = Arrangement.spacedBy(12.dp)) {
+                              item { Spacer(modifier = Modifier.height(8.dp)) }
+                              items(metrics.weaknessRadarTop5, key = { it.chapter.id }) { radarItem ->
+                                  SankalpCard(borderColor = SankalpPalette.MathsCoral.copy(alpha = 0.4f)) {
+                                      SubjectPill(subject = radarItem.chapter.subject)
+                                      Spacer(modifier = Modifier.height(6.dp))
+                                      Text(radarItem.chapter.chapterName, style = MaterialTheme.typography.titleMedium)
+                                      Text("Why now: " + radarItem.reason, style = MaterialTheme.typography.bodyMedium, color = MaterialTheme.colorScheme.onSurfaceVariant)
+                                  }
+                              }
+                          }
+                      }
+                      1 -> {
+                          LazyColumn(modifier = Modifier.fillMaxSize().padding(horizontal = 16.dp), verticalArrangement = Arrangement.spacedBy(12.dp)) {
+                              item {
+                                  Spacer(modifier = Modifier.height(8.dp))
+                                  Button(onClick = { showAddMockModal = true }, modifier = Modifier.fillMaxWidth(), shape = RoundedCornerShape(999.dp)) {
+                                      Icon(Icons.Outlined.Add, contentDescription = null)
+                                      Spacer(modifier = Modifier.width(8.dp))
+                                      Text("LOG NEW MOCK TEST RESULT", fontWeight = FontWeight.Bold)
+                                  }
+                              }
+                              item {
+                                  SankalpCard {
+                                      if (mocks.isNotEmpty()) {
+                                          Canvas(modifier = Modifier.fillMaxWidth().height(120.dp).padding(vertical = 8.dp)) {
+                                              val stepX = if (mocks.size <= 1) size.width else size.width / (mocks.size - 1)
+                                              val path = Path()
+                                              mocks.forEachIndexed { idx, mock ->
+                                                  val x = idx * stepX
+                                                  val y = size.height - ((mock.totalScore / 300f).coerceIn(0f, 1f) * size.height)
+                                                  if (idx == 0) path.moveTo(x, y) else path.lineTo(x, y)
+                                                  drawCircle(color = SankalpPalette.KesariAmber, radius = 6.dp.toPx(), center = Offset(x, y))
+                                              }
+                                              if (mocks.size > 1) drawPath(path = path, color = SankalpPalette.KesariAmber, style = Stroke(width = 3.dp.toPx(), cap = StrokeCap.Round))
+                                          }
+                                      }
+                                  }
+                              }
+                              items(mocks.reversed(), key = { it.id }) { mock ->
+                                  SankalpCard {
+                                      Row(modifier = Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.SpaceBetween) {
+                                          Text(mock.testName, style = MaterialTheme.typography.titleMedium)
+                                          Text(mock.totalScore.toString() + "/" + mock.maxMarks.toString(), fontFamily = FontFamily.Monospace, fontWeight = FontWeight.Bold, color = SankalpPalette.KesariAmber)
+                                      }
+                                      Text("PHY: " + mock.physicsScore.toString() + " | CHEM: " + mock.chemistryScore.toString() + " | MATH: " + mock.mathsScore.toString(), fontFamily = FontFamily.Monospace, fontSize = 12.sp)
+                                  }
+                              }
+                          }
+                      }
+                      2 -> {
+                          LazyColumn(modifier = Modifier.fillMaxSize().padding(horizontal = 16.dp), verticalArrangement = Arrangement.spacedBy(12.dp)) {
+                              item {
+                                  Spacer(modifier = Modifier.height(8.dp))
+                                  Button(onClick = { showAddErrorModal = true }, modifier = Modifier.fillMaxWidth(), shape = RoundedCornerShape(999.dp)) {
+                                      Icon(Icons.Outlined.BugReport, contentDescription = null)
+                                      Spacer(modifier = Modifier.width(8.dp))
+                                      Text("LOG MISTAKE AND ONE-LINE FIX", fontWeight = FontWeight.Bold)
+                                  }
+                              }
+                              items(errors, key = { it.id }) { err ->
+                                  SankalpCard {
+                                      SubjectPill(subject = err.subject)
+                                      Spacer(modifier = Modifier.height(4.dp))
+                                      Text(err.chapterName + ": " + err.questionSummary, style = MaterialTheme.typography.titleMedium)
+                                      Text("Fix: " + err.oneLineFix, style = MaterialTheme.typography.bodyMedium, color = SankalpPalette.PrussianTeal)
+                                  }
+                              }
+                          }
+                      }
+                  }
+              }
+
+              if (showAddMockModal) {
+                  var name by remember { mutableStateOf("") }
+                  var phy by remember { mutableStateOf("70") }
+                  var chem by remember { mutableStateOf("65") }
+                  var math by remember { mutableStateOf("55") }
+                  AlertDialog(
+                      onDismissRequest = { showAddMockModal = false },
+                      title = { Text("Log Mock Test") },
+                      text = {
+                          Column(verticalArrangement = Arrangement.spacedBy(8.dp)) {
+                              OutlinedTextField(value = name, onValueChange = { name = it }, label = { Text("Test Name") })
+                              OutlinedTextField(value = phy, onValueChange = { phy = it }, label = { Text("Physics Score") })
+                              OutlinedTextField(value = chem, onValueChange = { chem = it }, label = { Text("Chemistry Score") })
+                              OutlinedTextField(value = math, onValueChange = { math = it }, label = { Text("Maths Score") })
+                          }
+                      },
+                      confirmButton = {
+                          Button(onClick = {
+                              viewModel.logMockTest(name, "JEE Main (300)", 300, phy.toIntOrNull() ?: 0, chem.toIntOrNull() ?: 0, math.toIntOrNull() ?: 0, 82, 175)
+                              showAddMockModal = false
+                          }) { Text("Save") }
+                      },
+                      dismissButton = { TextButton(onClick = { showAddMockModal = false }) { Text("Cancel") } }
+                  )
+              }
+
+              if (showAddErrorModal) {
+                  var summary by remember { mutableStateOf("") }
+                  var fix by remember { mutableStateOf("") }
+                  AlertDialog(
+                      onDismissRequest = { showAddErrorModal = false },
+                      title = { Text("Log Question Error") },
+                      text = {
+                          Column(verticalArrangement = Arrangement.spacedBy(8.dp)) {
+                              OutlinedTextField(value = summary, onValueChange = { summary = it }, label = { Text("Mistake Summary") })
+                              OutlinedTextField(value = fix, onValueChange = { fix = it }, label = { Text("One-Line Fix") })
+                          }
+                      },
+                      confirmButton = {
+                          Button(onClick = {
+                              viewModel.logQuestionError(Subject.PHYSICS, "General", ErrorCategory.CONCEPT_GAP, summary, fix, true)
+                              showAddErrorModal = false
+                          }) { Text("Save") }
+                      },
+                      dismissButton = { TextButton(onClick = { showAddErrorModal = false }) { Text("Cancel") } }
+                  )
+              }
+          }
+          EOF
+
+          cat << 'EOF' > app/src/main/java/com/sankalp/jee/ui/screens/RevisionScreen.kt
+          package com.sankalp.jee.ui.screens
+
+          import androidx.compose.foundation.layout.Arrangement
+          import androidx.compose.foundation.layout.Column
+          import androidx.compose.foundation.layout.Row
+          import androidx.compose.foundation.layout.Spacer
+          import androidx.compose.foundation.layout.fillMaxSize
+          import androidx.compose.foundation.layout.fillMaxWidth
+          import androidx.compose.foundation.layout.height
+          import androidx.compose.foundation.layout.padding
+          import androidx.compose.foundation.lazy.LazyColumn
+          import androidx.compose.foundation.lazy.items
+          import androidx.compose.material3.Button
+          import androidx.compose.material3.ButtonDefaults
+          import androidx.compose.material3.MaterialTheme
+          import androidx.compose.material3.OutlinedButton
+          import androidx.compose.material3.OutlinedTextField
+          import androidx.compose.material3.Tab
+          import androidx.compose.material3.TabRow
+          import androidx.compose.material3.Text
+          import androidx.compose.runtime.Composable
+          import androidx.compose.runtime.getValue
+          import androidx.compose.runtime.mutableIntStateOf
+          import androidx.compose.runtime.mutableStateOf
+          import androidx.compose.runtime.remember
+          import androidx.compose.runtime.saveable.rememberSaveable
+          import androidx.compose.runtime.setValue
+          import androidx.compose.ui.Modifier
+          import androidx.compose.ui.text.font.FontFamily
+          import androidx.compose.ui.text.font.FontWeight
+          import androidx.compose.ui.unit.dp
+          import androidx.compose.ui.unit.sp
+          import androidx.lifecycle.compose.collectAsStateWithLifecycle
+          import com.sankalp.jee.ui.components.SankalpCard
+          import com.sankalp.jee.ui.components.SubjectPill
+          import com.sankalp.jee.ui.theme.SankalpPalette
+          import com.sankalp.jee.ui.viewmodel.SankalpViewModel
+          import java.time.LocalDate
+
+          @Composable
+          fun RevisionScreen(viewModel: SankalpViewModel) {
+              val flashcards by viewModel.flashcards.collectAsStateWithLifecycle()
+              val notes by viewModel.quickNotes.collectAsStateWithLifecycle()
+              var subTab by rememberSaveable { mutableIntStateOf(0) }
+              var isAnswerRevealed by remember { mutableStateOf(false) }
+              var formulaSearchQuery by rememberSaveable { mutableStateOf("") }
+
+              val dueQueue = flashcards.filter { it.nextReviewEpochDay <= LocalDate.now().toEpochDay() }
+
+              Column(modifier = Modifier.fillMaxSize()) {
+                  TabRow(selectedTabIndex = subTab, containerColor = MaterialTheme.colorScheme.surface) {
+                      listOf("SM-2 Queue (" + dueQueue.size.toString() + ")", "Formula Vault", "Doubt Box").forEachIndexed { i, title ->
+                          Tab(selected = subTab == i, onClick = { subTab = i }, text = { Text(title, fontSize = 13.sp, fontWeight = FontWeight.SemiBold) })
+                      }
+                  }
+
+                  when (subTab) {
+                      0 -> {
+                          Column(modifier = Modifier.fillMaxSize().padding(16.dp), verticalArrangement = Arrangement.spacedBy(14.dp)) {
+                              val activeCard = dueQueue.firstOrNull()
+                              if (activeCard == null) {
+                                  SankalpCard {
+                                      Text("All Due SM-2 Cards Reviewed for Today!", style = MaterialTheme.typography.headlineMedium, color = SankalpPalette.SuccessGreen)
+                                  }
+                              } else {
+                                  SankalpCard {
+                                      SubjectPill(subject = activeCard.subject)
+                                      Spacer(modifier = Modifier.height(12.dp))
+                                      Text(activeCard.frontPrompt, style = MaterialTheme.typography.headlineMedium)
+                                      Spacer(modifier = Modifier.height(14.dp))
+                                      if (!isAnswerRevealed) {
+                                          OutlinedButton(onClick = { isAnswerRevealed = true }, modifier = Modifier.fillMaxWidth()) {
+                                              Text("REVEAL FORMULA / ANSWER")
+                                          }
+                                      } else {
+                                          Text(activeCard.backAnswer, fontFamily = FontFamily.Monospace, color = SankalpPalette.PrussianTeal)
+                                          Spacer(modifier = Modifier.height(14.dp))
+                                          Row(modifier = Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.spacedBy(8.dp)) {
+                                              Button(onClick = { isAnswerRevealed = false; viewModel.reviewFlashcardSm2(activeCard, 1) }, modifier = Modifier.weight(1f), colors = ButtonDefaults.buttonColors(containerColor = SankalpPalette.DangerCrimson)) { Text("Again") }
+                                              Button(onClick = { isAnswerRevealed = false; viewModel.reviewFlashcardSm2(activeCard, 4) }, modifier = Modifier.weight(1f), colors = ButtonDefaults.buttonColors(containerColor = SankalpPalette.PrussianTeal)) { Text("Good") }
+                                              Button(onClick = { isAnswerRevealed = false; viewModel.reviewFlashcardSm2(activeCard, 5) }, modifier = Modifier.weight(1f), colors = ButtonDefaults.buttonColors(containerColor = SankalpPalette.SuccessGreen)) { Text("Easy") }
+                                          }
+                                      }
+                                  }
+                              }
+                          }
+                      }
+                      1 -> {
+                          val filtered = flashcards.filter { formulaSearchQuery.isBlank() || it.frontPrompt.contains(formulaSearchQuery, true) || it.backAnswer.contains(formulaSearchQuery, true) }
+                          LazyColumn(modifier = Modifier.fillMaxSize().padding(horizontal = 16.dp), verticalArrangement = Arrangement.spacedBy(12.dp)) {
+                              item {
+                                  Spacer(modifier = Modifier.height(8.dp))
+                                  OutlinedTextField(value = formulaSearchQuery, onValueChange = { formulaSearchQuery = it }, placeholder = { Text("Search formula...") }, modifier = Modifier.fillMaxWidth(), singleLine = true)
+                              }
+                              items(filtered, key = { it.id }) { card ->
+                                  SankalpCard {
+                                      SubjectPill(subject = card.subject)
+                                      Text(card.frontPrompt, style = MaterialTheme.typography.titleMedium)
+                                      Text(card.backAnswer, fontFamily = FontFamily.Monospace, fontSize = 13.sp, color = SankalpPalette.PrussianTeal)
+                                  }
+                              }
+                          }
+                      }
+                      2 -> {
+                          LazyColumn(modifier = Modifier.fillMaxSize().padding(horizontal = 16.dp), verticalArrangement = Arrangement.spacedBy(12.dp)) {
+                              item { Spacer(modifier = Modifier.height(8.dp)) }
+                              items(notes, key = { it.id }) { note ->
+                                  SankalpCard {
+                                      SubjectPill(subject = note.subject)
+                                      Text(note.title, style = MaterialTheme.typography.titleMedium)
+                                      Text(note.content, style = MaterialTheme.typography.bodyMedium)
+                                  }
+                              }
+                          }
+                      }
+                  }
+              }
+          }
+          EOF
 
       - name: Set up JDK 17
         uses: actions/setup-java@v4
